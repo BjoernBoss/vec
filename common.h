@@ -226,33 +226,33 @@ public:
 	bool parallel(const Vec& v, float precision = FloatCmpPrecision) const {
 		/* check if the vectors are considered zero */
 		const float lens[2] = { lenSquared(), v.lenSquared() };
-		if (lens[0] <= precision * precision)
-			return (lens[1] <= precision * precision);
-		else if (lens[1] <= precision * precision)
+		if (lens[0] <= precision)
+			return (lens[1] <= precision);
+		else if (lens[1] <= precision)
 			return false;
 
 		/* check if the vectors point in the same direction, when scaled and transformed by their sign */
-		return FloatCompare(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision * precision);
+		return FloatCompare(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
 	}
 
 	/* check if [this] and [v] are equal */
 	bool equal(const Vec& v, float precision = FloatCmpPrecision) const {
-		return FloatCompare(dot(v), lenSquared(), precision * precision);
+		return FloatCompare(dot(v), lenSquared(), precision);
 	}
 
 	/* check if the x-component of this vector is negligible */
 	bool zeroX(float precision = FloatCmpPrecision) const {
-		return FloatCompare(dot(planeX()), lenSquared(), precision * precision);
+		return FloatCompare(dot(planeX()), lenSquared(), precision);
 	}
 
 	/* check if the y-component of this vector is negligible */
 	bool zeroY(float precision = FloatCmpPrecision) const {
-		return FloatCompare(dot(planeY()), lenSquared(), precision * precision);
+		return FloatCompare(dot(planeY()), lenSquared(), precision);
 	}
 
 	/* check if the z-component of this vector is negligible */
 	bool zeroZ(float precision = FloatCmpPrecision) const {
-		return FloatCompare(dot(planeZ()), lenSquared(), precision * precision);
+		return FloatCompare(dot(planeZ()), lenSquared(), precision);
 	}
 
 	/* compute a vector which is a linear combination of [this] and [v] but is perpendicular to [this] */
@@ -275,6 +275,16 @@ public:
 	Line(const Line& l) : o(l.o), d(l.d) {}
 	Line(const Vec& _d) : d(_d) {}
 	Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
+
+public:
+	struct Linear {
+		float s;
+		float t;
+
+	public:
+		Linear() : s(0.0f), t(0.0f) {}
+		Linear(float _s, float _t) : s(_s), t(_t) {}
+	};
 
 public:
 	Line& operator=(Line&& l) noexcept {
@@ -317,7 +327,7 @@ public:
 
 		/* compare the point on the line with the given point */
 		const float lens[2] = { p.lenSquared(), t.lenSquared() };
-		return FloatCompare(p.dot(t), std::sqrt(lens[0] * lens[1]), precision * precision);
+		return FloatCompare(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
 	}
 
 	/* check if the line [l] and this line describe the same line */
@@ -448,7 +458,7 @@ public:
 		/* check if the two lines are parallel */
 		Vec pt;
 		bool on = false;
-		if (divisor <= precision) {
+		if (std::abs(divisor) <= precision) {
 			pt = o;
 			on = l.touch(pt, precision);
 		}
@@ -465,6 +475,46 @@ public:
 		if (invalid)
 			*invalid = !on;
 		return on ? pt : Vec();
+	}
+
+	/* compute the factor to scale this lines direction with to intersect the line [l] */
+	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = FloatCmpPrecision) const {
+		/*
+		*	E: [this] + s * x0
+		*	F: o + t * x1
+		*
+		*	Solve for s and insert yields: s = x1.y * (o.x - [this].x) - x1.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
+		*								   t = x0.y * (o.x - [this].x) - x0.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
+		*	(same for x-z/y-z)
+		*/
+
+		/*
+		*	Select the axis to compute the combination for and compute the divisor.
+		*	Select the axis by computing the cross product between the two and then selecting the smallest two components of it.
+		*/
+		const size_t i = d.cross(l.d).comp(true);
+		const size_t _0 = (i + 1) % 3;
+		const size_t _1 = (i + 2) % 3;
+		const float divisor = d.c[_0] * l.d.c[_1] - d.c[_1] * l.d.c[_0];
+
+		/* check if the two lines are parallel */
+		bool on = false;
+		Linear lin;
+		if (std::abs(divisor) <= precision)
+			on = l.touch(o, precision);
+
+		/* compute the points and check if they are equal */
+		else {
+			lin.s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
+			lin.t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
+			Vec pt = o + d * lin.s;
+			on = pt.equal(l.o + l.d * lin.t);
+		}
+
+		/* return the point if it is on the line */
+		if (invalid)
+			*invalid = !on;
+		return on ? lin : Linear();
 	}
 };
 struct Vec::Plane {
@@ -624,7 +674,7 @@ public:
 
 		/* compare the point on the plane with the given point */
 		const float lens[2] = { p.lenSquared(), t.lenSquared() };
-		return FloatCompare(p.dot(t), std::sqrt(lens[0] * lens[1]), precision * precision);
+		return FloatCompare(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
 	}
 
 	/* check if the plane [p] and this plane describe the same plane */
