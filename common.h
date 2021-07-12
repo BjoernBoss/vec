@@ -299,6 +299,17 @@ public:
 	}
 
 public:
+	Line planeX() const {
+		return Line(o.planeX(), d.planeX());
+	}
+	Line planeY() const {
+		return Line(o.planeY(), d.planeY());
+	}
+	Line planeZ() const {
+		return Line(o.planeZ(), d.planeZ());
+	}
+
+public:
 	/* compute a normalized origin that is close to zero normalize the direction */
 	Line norm() const {
 		/*
@@ -543,7 +554,7 @@ public:
 		return *this;
 	}
 
-private:
+public:
 	/*
 	*	compute the linear combination of the two extent vectors to the point [this] in a plane (here in X-Y plane)
 	*
@@ -551,40 +562,53 @@ private:
 	*	s = ((p.x - o.x) * b.y - (p.y - o.y) * b.x) / (a.x * b.y - a.y * b.x)
 	*	t = (a.x * (p.y - o.y) - a.y * (p.x - o.x)) / (a.x * b.y - a.y * b.x)
 	*/
-	struct LinComb {
-		float a;
-		float b;
+	struct Linear {
+		float s;
+		float t;
 
 	public:
-		LinComb() : a(0.0f), b(0.0f) {}
-		LinComb(float _a, float _b) : a(_a), b(_b) {}
+		Linear() : s(0.0f), t(0.0f) {}
+		Linear(float _s, float _t) : s(_s), t(_t) {}
 	};
-	LinComb fLinCombX(const Vec& p) const {
+
+private:
+	Linear fLinCombX(const Vec& p) const {
 		const float divisor = a.y * b.z - a.z * b.y;
 
 		const float _y = p.y - o.y;
 		const float _z = p.z - o.z;
-		const float _a = (_y * b.z - _z * b.y) / divisor;
-		const float _b = (a.y * _z - a.z * _y) / divisor;
-		return LinComb(_a, _b);
+		const float _s = (_y * b.z - _z * b.y) / divisor;
+		const float _t = (a.y * _z - a.z * _y) / divisor;
+		return Linear(_s, _t);
 	}
-	LinComb fLinCombY(const Vec& p) const {
+	Linear fLinCombY(const Vec& p) const {
 		const float divisor = a.x * b.z - a.z * b.x;
 
 		const float _x = p.x - o.x;
 		const float _z = p.z - o.z;
-		const float _a = (_x * b.z - _z * b.x) / divisor;
-		const float _b = (a.x * _z - a.z * _x) / divisor;
-		return LinComb(_a, _b);
+		const float _s = (_x * b.z - _z * b.x) / divisor;
+		const float _t = (a.x * _z - a.z * _x) / divisor;
+		return Linear(_s, _t);
 	}
-	LinComb fLinCombZ(const Vec& p) const {
+	Linear fLinCombZ(const Vec& p) const {
 		const float divisor = a.x * b.y - a.y * b.x;
 
 		const float _x = p.x - o.x;
 		const float _y = p.y - o.y;
-		const float _a = (_x * b.y - _y * b.x) / divisor;
-		const float _b = (a.x * _y - a.y * _x) / divisor;
-		return LinComb(_a, _b);
+		const float _s = (_x * b.y - _y * b.x) / divisor;
+		const float _t = (a.x * _y - a.y * _x) / divisor;
+		return Linear(_s, _t);
+	}
+
+public:
+	Plane planeX() const {
+		return Plane(o.planeX(), a.planeX(), b.planeX());
+	}
+	Plane planeY() const {
+		return Plane(o.planeY(), a.planeY(), b.planeY());
+	}
+	Plane planeZ() const {
+		return Plane(o.planeZ(), a.planeZ(), b.planeZ());
 	}
 
 public:
@@ -618,38 +642,56 @@ public:
 
 	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the Y-Z plane */
 	Vec projectX(const Vec& p) const {
-		const LinComb r = fLinCombX(p);
-		return Vec(o.x + r.a * a.x + r.b * b.x, p.y, p.z);
+		const Linear r = fLinCombX(p);
+		return Vec(o.x + r.s * a.x + r.t * b.x, p.y, p.z);
 	}
 
 	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the X-Z plane */
 	Vec projectY(const Vec& p) const {
-		const LinComb r = fLinCombY(p);
-		return Vec(p.x, o.y + r.a * a.y + r.b * b.y, p.z);
+		const Linear r = fLinCombY(p);
+		return Vec(p.x, o.y + r.s * a.y + r.t * b.y, p.z);
 	}
 
 	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the X-Y plane */
 	Vec projectZ(const Vec& p) const {
-		const LinComb r = fLinCombZ(p);
-		return Vec(p.x, p.y, o.z + r.a * a.z + r.b * b.z);
+		const Linear r = fLinCombZ(p);
+		return Vec(p.x, p.y, o.z + r.s * a.z + r.t * b.z);
 	}
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the Y-Z plane */
 	bool inTriangleX(const Vec& p, float precision = FloatCmpPrecision) const {
-		const LinComb r = fLinCombX(p);
-		return r.a >= -precision && r.b >= -precision && (r.a + r.b) <= (1.0f + precision);
+		const Linear r = fLinCombX(p);
+		return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 	}
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the X-Z plane */
 	bool inTriangleY(const Vec& p, float precision = FloatCmpPrecision) const {
-		const LinComb r = fLinCombY(p);
-		return r.a >= -precision && r.b >= -precision && (r.a + r.b) <= (1.0f + precision);
+		const Linear r = fLinCombY(p);
+		return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 	}
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the X-Y plane */
 	bool inTriangleZ(const Vec& p, float precision = FloatCmpPrecision) const {
-		const LinComb r = fLinCombZ(p);
-		return r.a >= -precision && r.b >= -precision && (r.a + r.b) <= (1.0f + precision);
+		const Linear r = fLinCombZ(p);
+		return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
+	}
+
+	/* check if [p] lies within the cone of a and b when projected orthogonally onto the Y-Z plane */
+	float inConeX(const Vec& p, float precision = FloatCmpPrecision) const {
+		const Linear r = fLinCombX(p);
+		return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
+	}
+
+	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Z plane */
+	float inConeY(const Vec& p, float precision = FloatCmpPrecision) const {
+		const Linear r = fLinCombY(p);
+		return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
+	}
+
+	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Y plane */
+	float inConeZ(const Vec& p, float precision = FloatCmpPrecision) const {
+		const Linear r = fLinCombZ(p);
+		return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
 	}
 
 	/* check if [p] lies on the plane */
@@ -661,7 +703,7 @@ public:
 		size_t index = a.cross(b).comp(false);
 
 		/* compute the linear combination across the other two axes */
-		LinComb r;
+		Linear r;
 		if (index == Component::ComponentX)
 			r = fLinCombX(p);
 		else if (index == Component::ComponentY)
@@ -670,7 +712,7 @@ public:
 			r = fLinCombZ(p);
 
 		/* compute the point on the plane where the given point is expected to be */
-		const Vec t = o + a * r.a + b * r.b;
+		const Vec t = o + a * r.s + b * r.t;
 
 		/* compare the point on the plane with the given point */
 		const float lens[2] = { p.lenSquared(), t.lenSquared() };
@@ -889,5 +931,20 @@ public:
 		*/
 		const float a = (o - l.o).dot(crs) / l.d.dot(crs);
 		return l.o + l.d * a;
+	}
+
+	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the Y-Z plane */
+	Linear linearX(const Vec& p) const {
+		return fLinCombX(p);
+	}
+
+	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the X-Z plane */
+	Linear linearY(const Vec& p) const {
+		return fLinCombY(p);
+	}
+
+	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the X-Y plane */
+	Linear linearZ(const Vec& p) const {
+		return fLinCombZ(p);
 	}
 };
