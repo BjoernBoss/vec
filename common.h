@@ -310,11 +310,16 @@ public:
 	}
 
 public:
+	/* compute a point on this line */
+	Vec point(float f) const {
+		return o + d * f;
+	}
+
 	/* compute a normalized origin that is close to zero normalize the direction */
 	Line norm() const {
 		/*
-		*	[this] - a * d = NewOrigin
-		*	-> ([this] - a * d) * d = 0 (the line and NewOrigin should be perpendicular)
+		*	o - a * d = NewOrigin
+		*	-> (o - a * d) * d = 0 (the line and NewOrigin should be perpendicular)
 		*	Solve for a
 		*/
 		const float a = o.dot(d) / d.dot(d);
@@ -326,7 +331,6 @@ public:
 		/*
 		*	E: o + s * d
 		*	Set equal to [p] and solve for s and insert
-		*
 		*/
 
 		/* find the largest component which should not be zero if the line is well defined */
@@ -349,26 +353,37 @@ public:
 	/* compute the shortest vector which connects [p] to a point on the line (automatically perpendicular) */
 	Vec closest(const Vec& p) const {
 		/*
-		*	[this] + v = o + a * d
-		*	-> (o + a * d - [this]) * d = 0 (the line and v should be perpendicular)
+		*	o + a * d = p + v
+		*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
 		*	Solve for a
 		*/
 		const float a = (p - o).dot(d) / d.dot(d);
 		return o + d * a - p;
 	}
 
+	/* compute the factor for which this line reaches the point closest to p (automatically perpendicular) */
+	float closestFactor(const Vec& p) const {
+		/*
+		*	o + a * d = p + v
+		*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
+		*	Solve for a
+		*/
+		return (p - o).dot(d) / d.dot(d);
+	}
+
 	/* compute the shortest line which intersects this line and the line [l] */
 	Line closest(const Line& l) const {
 		/*
 		*	E: o + s * d
-		*	F: p.o + r * p.d
+		*	F: l.o + t * l.d
 		*
-		*	To solve: o + s * d + t * v = p.o + r * p.d
-		*	both d and p.d have to be perpendicular to v
-		*		=> v = d x x1
+		*	To solve: o + s * d + r * v = l.o + t * l.d
+		*	both d and l.d have to be perpendicular to v
+		*		=> v = d x l.d
 		*
-		*	Solution: t = ((p.o - o) * (d x p.d)) / v * (d x p.d)
-		*	Solution: s = ((o - p.o) * (v x p.d)) / v * (d x p.d)
+		*	Solution: r = ((l.o - o) * (d x l.d)) / v * (d x l.d)
+		*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
+		*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
 		*/
 		const Vec v = d.cross(l.d);
 
@@ -379,11 +394,41 @@ public:
 		/* compute the two scalars */
 		const float tmp = v.dot(v);
 		const Vec df = l.o - o;
-		const float t = df.dot(v) / tmp;
+		const float r = df.dot(v) / tmp;
 		const float s = -df.dot(v.cross(l.d)) / tmp;
 
 		/* compute the final result */
-		return Line(o + d * s, v * t);
+		return Line(o + d * s, v * r);
+	}
+
+	/* compute the shortest line which intersects this line and the line [l] */
+	Linear closestFactor(const Line& l) const {
+		/*
+		*	E: o + s * d
+		*	F: l.o + t * l.d
+		*
+		*	To solve: o + s * d + r * v = l.o + t * l.d
+		*	both d and l.d have to be perpendicular to v
+		*		=> v = d x l.d
+		*
+		*	Solution: r = ((l.o - o) * (d x l.d)) / v * (d x l.d)
+		*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
+		*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
+		*/
+		const Vec v = d.cross(l.d);
+
+		/* check if the lines run in parallel */
+		if (v.equal(Vec()))
+			return Linear(0.0f, l.closestFactor(o));
+
+		/* compute the two scalars */
+		const float tmp = v.dot(v);
+		const Vec df = l.o - o;
+		const float s = -df.dot(v.cross(l.d)) / tmp;
+		const float t = -df.dot(v.cross(d)) / tmp;
+
+		/* return the two factors */
+		return Linear(s, t);
 	}
 
 	/* compute the intersection point of this line and the Y-Z plane at [xPlane] */
@@ -399,7 +444,7 @@ public:
 
 		/*
 		*	E: x = xPlane
-		*	Line: [this] + a * d
+		*	Line: o + a * d
 		*	Solve for a and insert
 		*/
 		const float a = (xPlane - o.x) / d.x;
@@ -419,7 +464,7 @@ public:
 
 		/*
 		*	E: y = yPlane
-		*	Line: [this] + a * d
+		*	Line: o + a * d
 		*	Solve for a and insert
 		*/
 		const float a = (yPlane - o.y) / d.y;
@@ -439,7 +484,7 @@ public:
 
 		/*
 		*	E: z = zPlane
-		*	Line: [this] + a * d
+		*	Line: o + a * d
 		*	Solve for a and insert
 		*/
 		const float a = (zPlane - o.z) / d.z;
@@ -449,11 +494,11 @@ public:
 	/* compute the intersection point of this line and the line [l] */
 	Vec intersect(const Line& l, bool* invalid = 0, float precision = FloatCmpPrecision) const {
 		/*
-		*	E: [this] + s * x0
-		*	F: o + t * x1
+		*	E: o + s * d
+		*	F: l.o + t * l.d
 		*
-		*	Solve for s and insert yields: s = x1.y * (o.x - [this].x) - x1.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
-		*								   t = x0.y * (o.x - [this].x) - x0.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
+		*	Solve for s and insert yields: s = l.d.y * (l.o.x - o.x) - l.d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
+		*								   t = d.y * (l.o.x - o.x) - d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
 		*	(same for x-z/y-z)
 		*/
 
@@ -488,14 +533,14 @@ public:
 		return on ? pt : Vec();
 	}
 
-	/* compute the factor to scale this lines direction with to intersect the line [l] */
+	/* compute the factor to scale this lines direction and [l]'s direction with to intersect the lines */
 	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = FloatCmpPrecision) const {
 		/*
-		*	E: [this] + s * x0
-		*	F: o + t * x1
+		*	E: o + s * d
+		*	F: l.o + t * l.d
 		*
-		*	Solve for s and insert yields: s = x1.y * (o.x - [this].x) - x1.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
-		*								   t = x0.y * (o.x - [this].x) - x0.x * (o.y - [this].y) / (x0.x * x1.y - x0.y * x1.x)
+		*	Solve for s and insert yields: s = l.d.y * (l.o.x - o.x) - l.d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
+		*								   t = d.y * (l.o.x - o.x) - d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
 		*	(same for x-z/y-z)
 		*/
 
@@ -620,6 +665,16 @@ public:
 	/* compute the center point of the triangle produced by the two extent vectors and the origin */
 	Vec center() const {
 		return o + ((a + b) / 3);
+	}
+
+	/* compute a point on this plane */
+	Vec point(float s, float t) const {
+		return o + a * s + b * t;
+	}
+
+	/* compute a point on this plane */
+	Vec point(const Linear& lin) const {
+		return o + a * lin.s + b * lin.t;
 	}
 
 	/* compute a normalized origin that is close to zero and normalize the directions as well as orient them to be perpendicular */
