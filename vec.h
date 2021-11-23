@@ -5,7 +5,7 @@
 #include <algorithm>
 
 /* define the float number helper */
-namespace Num {
+namespace num {
 	static constexpr float ConstPi = 3.1415926536f;
 
 	/* define the float comparison function */
@@ -101,19 +101,22 @@ public:
 	Plane plane(const Vec& p0, const Vec& p1) const;
 
 	/* check if [this] and [v] are linear combinations of each other */
-	bool parallel(const Vec& v, float precision = Num::Precision) const;
+	bool parallel(const Vec& v, float precision = num::Precision) const;
 
 	/* check if [this] and [v] are equal */
-	bool equal(const Vec& v, float precision = Num::Precision) const;
+	bool equal(const Vec& v, float precision = num::Precision) const;
 
 	/* check if the x-component of this vector is negligible */
-	bool zeroX(float precision = Num::Precision) const;
+	bool zeroX(float precision = num::Precision) const;
 
 	/* check if the y-component of this vector is negligible */
-	bool zeroY(float precision = Num::Precision) const;
+	bool zeroY(float precision = num::Precision) const;
 
 	/* check if the z-component of this vector is negligible */
-	bool zeroZ(float precision = Num::Precision) const;
+	bool zeroZ(float precision = num::Precision) const;
+
+	/* check if the vector is negligible */
+	bool zero(float precision = num::Precision) const;
 
 	/* compute a vector which is a linear combination of [this] and [v] but is perpendicular to [this] */
 	Vec perpendicular(const Vec& v) const;
@@ -152,10 +155,10 @@ public:
 	Line norm() const;
 
 	/* check if [p] lies on the line */
-	bool touch(const Vec& p, float precision = Num::Precision) const;
+	bool touch(const Vec& p, float precision = num::Precision) const;
 
 	/* check if the line [l] and this line describe the same line */
-	bool same(const Line& l, float precision = Num::Precision) const;
+	bool same(const Line& l, float precision = num::Precision) const;
 
 	/* compute the shortest vector which connects [p] to a point on the line (automatically perpendicular) */
 	Vec closest(const Vec& p) const;
@@ -170,19 +173,19 @@ public:
 	Linear closestFactor(const Line& l) const;
 
 	/* compute the intersection point of this line and the Y-Z plane at [xPlane] */
-	Vec intersectX(float xPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Vec intersectX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection point of the line [this:x0] and the X-Z plane at [yPlane] */
-	Vec intersectY(float yPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Vec intersectY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection point of the line [this:x0] and the X-Y plane at [zPlane] */
-	Vec intersectZ(float zPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Vec intersectZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection point of this line and the line [l] */
-	Vec intersect(const Line& l, bool* invalid = 0, float precision = Num::Precision) const;
+	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the factor to scale this lines direction and [l]'s direction with to intersect the lines */
-	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = Num::Precision) const;
+	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 };
 
 /* define the plane object */
@@ -205,7 +208,7 @@ public:
 	Plane();
 	Plane(const Vec& a, const Vec& b);
 	Plane(const Vec& o, const Vec& a, const Vec& b);
-	
+
 private:
 	/*
 	*	compute the linear combination of the two extent vectors to the point [this] in a plane (here in X-Y plane)
@@ -249,28 +252,28 @@ public:
 	Vec projectZ(const Vec& p) const;
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the Y-Z plane */
-	bool inTriangleX(const Vec& p, float precision = Num::Precision) const;
+	bool inTriangleX(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the X-Z plane */
-	bool inTriangleY(const Vec& p, float precision = Num::Precision) const;
+	bool inTriangleY(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the triangle when projected orthogonally onto the X-Y plane */
-	bool inTriangleZ(const Vec& p, float precision = Num::Precision) const;
+	bool inTriangleZ(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the Y-Z plane */
-	float inConeX(const Vec& p, float precision = Num::Precision) const;
+	float inConeX(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Z plane */
-	float inConeY(const Vec& p, float precision = Num::Precision) const;
+	float inConeY(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Y plane */
-	float inConeZ(const Vec& p, float precision = Num::Precision) const;
+	float inConeZ(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies on the plane */
-	bool touch(const Vec& p, float precision = Num::Precision) const;
+	bool touch(const Vec& p, float precision = num::Precision) const;
 
 	/* check if the plane [p] and this plane describe the same plane */
-	bool same(const Plane& p, float precision = Num::Precision) const;
+	bool same(const Plane& p, float precision = num::Precision) const;
 
 	/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */
 	Vec closest(const Vec& p) const;
@@ -285,19 +288,19 @@ public:
 	Vec steepestZ() const;
 
 	/* compute the intersecting line between the Y-Z plane at [xPlane] and this plane */
-	Line intersectX(float xPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Line intersectX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersecting line between the X-Z plane at [yPlane] and this plane */
-	Line intersectY(float yPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Line intersectY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersecting line between the X-Y plane at [zPlane] and this plane */
-	Line intersectZ(float zPlane, bool* invalid = 0, float precision = Num::Precision) const;
+	Line intersectZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection line of the this and the plane [p] */
-	Line intersect(const Plane& p, bool* invalid = 0, float precision = Num::Precision) const;
+	Line intersect(const Plane& p, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection point of the line [l] and this plane */
-	Vec intersect(const Line& l, bool* invalid = 0, float precision = Num::Precision) const;
+	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the Y-Z plane */
 	Linear linearX(const Vec& p) const;

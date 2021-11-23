@@ -51,13 +51,13 @@ float Vec::angle(const Vec& v) const {
 	float lenProd = std::sqrt(lenSquared() * v.lenSquared());
 	float frac = dotProd / lenProd;
 
-	/* check if the angle reaches the deges where the uncertainty of floats
+	/* check if the angle reaches the degrees where the uncertainty of floats
 		might lead to values outside of the scope of arccos */
 	if (frac >= 1.0f)
 		return 0.0f;
 	else if (frac <= -1.0f)
 		return 180.0f;
-	return Num::ToDegree(std::acos(frac));
+	return num::ToDegree(std::acos(frac));
 }
 float Vec::len() const {
 	return std::sqrt(x * x + y * y + z * z);
@@ -94,7 +94,7 @@ Vec Vec::planeZ() const {
 	return Vec(x, y, 0.0f);
 }
 Vec Vec::rotateX(float a) const {
-	a = Num::ToRadian(a);
+	a = num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
 	return Vec(
@@ -103,7 +103,7 @@ Vec Vec::rotateX(float a) const {
 		y * sa + z * ca);
 }
 Vec Vec::rotateY(float a) const {
-	a = Num::ToRadian(a);
+	a = num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
 	return Vec(
@@ -112,7 +112,7 @@ Vec Vec::rotateY(float a) const {
 		z * ca - x * sa);
 }
 Vec Vec::rotateZ(float a) const {
-	a = -Num::ToRadian(a);
+	a = -num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
 	return Vec(
@@ -146,19 +146,22 @@ bool Vec::parallel(const Vec& v, float precision) const {
 		return false;
 
 	/* check if the vectors point in the same direction, when scaled and transformed by their sign */
-	return Num::Cmp(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
+	return num::Cmp(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
 }
 bool Vec::equal(const Vec& v, float precision) const {
-	return Num::Cmp(dot(v), lenSquared(), precision);
+	return num::Cmp(dot(v), lenSquared(), precision);
 }
 bool Vec::zeroX(float precision) const {
-	return Num::Cmp(dot(planeX()), lenSquared(), precision);
+	return num::Cmp(dot(planeX()), lenSquared(), precision);
 }
 bool Vec::zeroY(float precision) const {
-	return Num::Cmp(dot(planeY()), lenSquared(), precision);
+	return num::Cmp(dot(planeY()), lenSquared(), precision);
 }
 bool Vec::zeroZ(float precision) const {
-	return Num::Cmp(dot(planeZ()), lenSquared(), precision);
+	return num::Cmp(dot(planeZ()), lenSquared(), precision);
+}
+bool Vec::zero(float precision) const {
+	return num::Cmp(0.0f, lenSquared(), precision);
 }
 Vec Vec::perpendicular(const Vec& v) const {
 	/*
@@ -211,7 +214,7 @@ bool Vec::Line::touch(const Vec& p, float precision) const {
 
 	/* compare the point on the line with the given point */
 	const float lens[2] = { p.lenSquared(), t.lenSquared() };
-	return Num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
+	return num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
 }
 bool Vec::Line::same(const Line& l, float precision) const {
 	return l.touch(o, precision) && l.d.parallel(d, precision);
@@ -549,7 +552,7 @@ bool Vec::Plane::touch(const Vec& p, float precision) const {
 
 	/* compare the point on the plane with the given point */
 	const float lens[2] = { p.lenSquared(), t.lenSquared() };
-	return Num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
+	return num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
 }
 bool Vec::Plane::same(const Plane& p, float precision) const {
 	return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
