@@ -103,8 +103,11 @@ public:
 	/* check if [this] and [v] are linear combinations of each other */
 	bool parallel(const Vec& v, float precision = num::Precision) const;
 
-	/* check if [this] and [v] are equal */
-	bool equal(const Vec& v, float precision = num::Precision) const;
+	/* check if [this] and [v] describe the same vector (point into the same direction with a the same length in regard to the precision) */
+	bool same(const Vec& v, float precision = num::Precision) const;
+
+	/* check if [this] and [v] are identical (all components are weighted the same) */
+	bool identical(const Vec& v, float precision = num::Precision) const;
 
 	/* check if the x-component of this vector is negligible */
 	bool zeroX(float precision = num::Precision) const;
@@ -159,6 +162,9 @@ public:
 
 	/* check if the line [l] and this line describe the same line */
 	bool same(const Line& l, float precision = num::Precision) const;
+
+	/* check if the line [l] and this line describe the identically same line */
+	bool identical(const Line& l, float precision = num::Precision) const;
 
 	/* compute the shortest vector which connects [p] to a point on the line (automatically perpendicular) */
 	Vec closest(const Vec& p) const;
@@ -274,6 +280,9 @@ public:
 
 	/* check if the plane [p] and this plane describe the same plane */
 	bool same(const Plane& p, float precision = num::Precision) const;
+
+	/* check if the plane [p] and this plane describe the identically same plane */
+	bool identical(const Plane& p, float precision = num::Precision) const;
 
 	/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */
 	Vec closest(const Vec& p) const;

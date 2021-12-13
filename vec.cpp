@@ -148,8 +148,11 @@ bool Vec::parallel(const Vec& v, float precision) const {
 	/* check if the vectors point in the same direction, when scaled and transformed by their sign */
 	return num::Cmp(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
 }
-bool Vec::equal(const Vec& v, float precision) const {
+bool Vec::same(const Vec& v, float precision) const {
 	return num::Cmp(dot(v), lenSquared(), precision);
+}
+bool Vec::identical(const Vec& v, float precision) const {
+	return num::Cmp((v - *this).lenSquared(), 0.0f, precision);
 }
 bool Vec::zeroX(float precision) const {
 	return num::Cmp(dot(planeX()), lenSquared(), precision);
@@ -219,6 +222,9 @@ bool Vec::Line::touch(const Vec& p, float precision) const {
 bool Vec::Line::same(const Line& l, float precision) const {
 	return l.touch(o, precision) && l.d.parallel(d, precision);
 }
+bool Vec::Line::identical(const Line& l, float precision) const {
+	return l.o.identical(o, precision) && l.d.identical(d, precision);
+}
 Vec Vec::Line::closest(const Vec& p) const {
 	/*
 	*	o + a * d = p + v
@@ -252,7 +258,7 @@ Vec::Line Vec::Line::closest(const Line& l) const {
 	const Vec v = d.cross(l.d);
 
 	/* check if the lines run in parallel */
-	if (v.equal(Vec()))
+	if (v.same(Vec()))
 		return Line(o, l.closest(o));
 
 	/* compute the two scalars */
@@ -280,7 +286,7 @@ Vec::Line::Linear Vec::Line::closestFactor(const Line& l) const {
 	const Vec v = d.cross(l.d);
 
 	/* check if the lines run in parallel */
-	if (v.equal(Vec()))
+	if (v.same(Vec()))
 		return Linear(0.0f, l.closestFactor(o));
 
 	/* compute the two scalars */
@@ -378,7 +384,7 @@ Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
 		const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		Vec pt = o + d * s;
-		on = pt.equal(l.o + l.d * t);
+		on = pt.same(l.o + l.d * t);
 	}
 
 	/* return the point if it is on the line */
@@ -416,7 +422,7 @@ Vec::Line::Linear Vec::Line::intersectFactor(const Line& l, bool* invalid, float
 		lin.s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		lin.t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		Vec pt = o + d * lin.s;
-		on = pt.equal(l.o + l.d * lin.t);
+		on = pt.same(l.o + l.d * lin.t);
 	}
 
 	/* return the point if it is on the line */
@@ -556,6 +562,9 @@ bool Vec::Plane::touch(const Vec& p, float precision) const {
 }
 bool Vec::Plane::same(const Plane& p, float precision) const {
 	return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
+}
+bool Vec::Plane::identical(const Plane& p, float precision) const {
+	return p.o.identical(o, precision) && p.a.identical(a, precision) && p.b.identical(b, precision);
 }
 Vec Vec::Plane::closest(const Vec& p) const {
 	/*
