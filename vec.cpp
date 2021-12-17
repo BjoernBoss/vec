@@ -137,6 +137,10 @@ Vec::Line Vec::line(const Vec& p) const {
 Vec::Plane Vec::plane(const Vec& p0, const Vec& p1) const {
 	return Plane(*this, p0 - *this, p1 - *this);
 }
+Vec Vec::scale(float l) const {
+	float factor = std::sqrt((l * l) / lenSquared());
+	return *this * factor;
+}
 bool Vec::parallel(const Vec& v, float precision) const {
 	/* check if the vectors are considered zero */
 	const float lens[2] = { lenSquared(), v.lenSquared() };
@@ -173,6 +177,13 @@ Vec Vec::perpendicular(const Vec& v) const {
 	*/
 	const float a = dot(v) / dot(*this);
 	return v - *this * a;
+}
+Vec Vec::project(const Vec& v) const {
+	float factor = dot(v) / lenSquared();
+	return *this * factor;
+}
+float Vec::projectFactor(const Vec& v) const {
+	return dot(v) / lenSquared();
 }
 
 /* implement the line object */
@@ -383,7 +394,7 @@ Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
 	else {
 		const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
-		Vec pt = o + d * s;
+		pt = o + d * s;
 		on = pt.same(l.o + l.d * t);
 	}
 
@@ -437,31 +448,22 @@ Vec::Plane::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
 Vec::Plane::Plane() {}
 Vec::Plane::Plane(const Vec& _a, const Vec& _b) : a(_a), b(_b) {}
 Vec::Plane::Plane(const Vec& _o, const Vec& _a, const Vec& _b) : o(_o), a(_a), b(_b) {}
-Vec::Plane::Linear Vec::Plane::fLinCombX(const Vec& p) const {
-	const float divisor = a.y * b.z - a.z * b.y;
+Vec::Plane::Linear Vec::Plane::fLinComb(const Vec& p, size_t index) const {
+	/*
+	*	compute the linar combination that results in the point [p] while ignoring the component passed in as index (here in X-Y plane)
+	*	p = o + s * a + t * b
+	*	s = ((p.x - o.x) * b.y - (p.y - o.y) * b.x) / (a.x * b.y - a.y * b.x)
+	*	t = (a.x * (p.y - o.y) - a.y * (p.x - o.x)) / (a.x * b.y - a.y * b.x)
+	*/
+	const size_t _0 = (index + 1) % 3;
+	const size_t _1 = (index + 2) % 3;
 
-	const float _y = p.y - o.y;
-	const float _z = p.z - o.z;
-	const float _s = (_y * b.z - _z * b.y) / divisor;
-	const float _t = (a.y * _z - a.z * _y) / divisor;
-	return Linear(_s, _t);
-}
-Vec::Plane::Linear Vec::Plane::fLinCombY(const Vec& p) const {
-	const float divisor = a.x * b.z - a.z * b.x;
+	const float divisor = a.c[_0] * b.c[_1] - a.c[_1] * b.c[_0];
 
-	const float _x = p.x - o.x;
-	const float _z = p.z - o.z;
-	const float _s = (_x * b.z - _z * b.x) / divisor;
-	const float _t = (a.x * _z - a.z * _x) / divisor;
-	return Linear(_s, _t);
-}
-Vec::Plane::Linear Vec::Plane::fLinCombZ(const Vec& p) const {
-	const float divisor = a.x * b.y - a.y * b.x;
-
-	const float _x = p.x - o.x;
-	const float _y = p.y - o.y;
-	const float _s = (_x * b.y - _y * b.x) / divisor;
-	const float _t = (a.x * _y - a.y * _x) / divisor;
+	const float _v0 = p.c[_0] - o.c[_0];
+	const float _v1 = p.c[_1] - o.c[_1];
+	const float _s = (_v0 * b.c[_1] - _v1 * b.c[_0]) / divisor;
+	const float _t = (a.c[_0] * _v1 - a.c[_1] * _v0) / divisor;
 	return Linear(_s, _t);
 }
 Vec::Plane Vec::Plane::planeX() const {
@@ -502,40 +504,78 @@ Vec::Plane Vec::Plane::norm() const {
 	return Plane(crs * f, _a, _a.perpendicular(b).norm());
 }
 Vec Vec::Plane::projectX(const Vec& p) const {
-	const Linear r = fLinCombX(p);
+	const Linear r = fLinComb(p, Component::ComponentX);
 	return Vec(o.x + r.s * a.x + r.t * b.x, p.y, p.z);
 }
 Vec Vec::Plane::projectY(const Vec& p) const {
-	const Linear r = fLinCombY(p);
+	const Linear r = fLinComb(p, Component::ComponentY);
 	return Vec(p.x, o.y + r.s * a.y + r.t * b.y, p.z);
 }
 Vec Vec::Plane::projectZ(const Vec& p) const {
-	const Linear r = fLinCombZ(p);
+	const Linear r = fLinComb(p, Component::ComponentZ);
 	return Vec(p.x, p.y, o.z + r.s * a.z + r.t * b.z);
 }
+Vec Vec::Plane::project(const Vec& v) const {
+	/*
+	*	compute the projection onto the normal of the plane and subtract it from p
+	*	as this will result in only the part on the vector within the plane
+	*/
+	const Vec crs = a.cross(b);
+	return v - crs.project(v);
+}
 bool Vec::Plane::inTriangleX(const Vec& p, float precision) const {
-	const Linear r = fLinCombX(p);
+	const Linear r = fLinComb(p, Component::ComponentX);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
 bool Vec::Plane::inTriangleY(const Vec& p, float precision) const {
-	const Linear r = fLinCombY(p);
+	const Linear r = fLinComb(p, Component::ComponentY);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
 bool Vec::Plane::inTriangleZ(const Vec& p, float precision) const {
-	const Linear r = fLinCombZ(p);
+	const Linear r = fLinComb(p, Component::ComponentZ);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-float Vec::Plane::inConeX(const Vec& p, float precision) const {
-	const Linear r = fLinCombX(p);
-	return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
+bool Vec::Plane::inTriangle(const Vec& p, bool* touching, float precision) const {
+	/*
+	*	find the smallest component of the cross product which ensures that
+	*	the other two components are larger, as long as the plane is well defined
+	*/
+	size_t index = a.cross(b).comp(false);
+
+	/* compute the linear combination across the other two axes */
+	Linear r = fLinComb(p, index);
+
+	/* check if the touching property should be validated */
+	if (touching != 0)
+		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
+	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-float Vec::Plane::inConeY(const Vec& p, float precision) const {
-	const Linear r = fLinCombY(p);
-	return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
+bool Vec::Plane::inConeX(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Component::ComponentX);
+	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
-float Vec::Plane::inConeZ(const Vec& p, float precision) const {
-	const Linear r = fLinCombZ(p);
-	return (r.s >= -precision && r.t >= -precision) ? r.s + r.t : -1.0f;
+bool Vec::Plane::inConeY(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Component::ComponentY);
+	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
+}
+bool Vec::Plane::inConeZ(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Component::ComponentZ);
+	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
+}
+bool Vec::Plane::inCone(const Vec& p, bool* touching, float precision) const {
+	/*
+	*	find the smallest component of the cross product which ensures that
+	*	the other two components are larger, as long as the plane is well defined
+	*/
+	size_t index = a.cross(b).comp(false);
+
+	/* compute the linear combination across the other two axes */
+	Linear r = fLinComb(p, index);
+
+	/* check if the touching property should be validated */
+	if (touching != 0)
+		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
+	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
 bool Vec::Plane::touch(const Vec& p, float precision) const {
 	/*
@@ -545,13 +585,7 @@ bool Vec::Plane::touch(const Vec& p, float precision) const {
 	size_t index = a.cross(b).comp(false);
 
 	/* compute the linear combination across the other two axes */
-	Linear r;
-	if (index == Component::ComponentX)
-		r = fLinCombX(p);
-	else if (index == Component::ComponentY)
-		r = fLinCombY(p);
-	else
-		r = fLinCombZ(p);
+	Linear r = fLinComb(p, index);
 
 	/* compute the point on the plane where the given point is expected to be */
 	const Vec t = o + a * r.s + b * r.t;
@@ -758,11 +792,26 @@ Vec Vec::Plane::intersect(const Line& l, bool* invalid, float precision) const {
 	return l.o + l.d * a;
 }
 Vec::Plane::Linear Vec::Plane::linearX(const Vec& p) const {
-	return fLinCombX(p);
+	return fLinComb(p, Component::ComponentX);
 }
 Vec::Plane::Linear Vec::Plane::linearY(const Vec& p) const {
-	return fLinCombY(p);
+	return fLinComb(p, Component::ComponentY);
 }
 Vec::Plane::Linear Vec::Plane::linearZ(const Vec& p) const {
-	return fLinCombZ(p);
+	return fLinComb(p, Component::ComponentZ);
+}
+Vec::Plane::Linear Vec::Plane::linear(const Vec& p, bool* touching, float precision) const {
+	/*
+	*	find the smallest component of the cross product which ensures that
+	*	the other two components are larger, as long as the plane is well defined
+	*/
+	size_t index = a.cross(b).comp(false);
+
+	/* compute the linear combination across the other two axes */
+	Linear r = fLinComb(p, index);
+
+	/* check if the touching property should be validated */
+	if (touching != 0)
+		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
+	return r;
 }

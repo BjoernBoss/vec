@@ -100,6 +100,9 @@ public:
 	/* construct the plane [this:(p0-this):(p1-this)] */
 	Plane plane(const Vec& p0, const Vec& p1) const;
 
+	/* construct a vector which is parallel to [this] but has length l */
+	Vec scale(float l) const;
+
 	/* check if [this] and [v] are linear combinations of each other */
 	bool parallel(const Vec& v, float precision = num::Precision) const;
 
@@ -123,6 +126,12 @@ public:
 
 	/* compute a vector which is a linear combination of [this] and [v] but is perpendicular to [this] */
 	Vec perpendicular(const Vec& v) const;
+
+	/* compute a vector which is a projection of [v] onto [this] and thereby parallel to [this] */
+	Vec project(const Vec& v) const;
+
+	/* compute the factor which multiplied with [this] will result in a projection of [v] onto [this] and thereby parallel to [this] */
+	float projectFactor(const Vec& v) const;
 };
 
 /* define the line object */
@@ -216,16 +225,8 @@ public:
 	Plane(const Vec& o, const Vec& a, const Vec& b);
 
 private:
-	/*
-	*	compute the linear combination of the two extent vectors to the point [this] in a plane (here in X-Y plane)
-	*
-	*	p = o + s * a + t * b
-	*	s = ((p.x - o.x) * b.y - (p.y - o.y) * b.x) / (a.x * b.y - a.y * b.x)
-	*	t = (a.x * (p.y - o.y) - a.y * (p.x - o.x)) / (a.x * b.y - a.y * b.x)
-	*/
-	Linear fLinCombX(const Vec& p) const;
-	Linear fLinCombY(const Vec& p) const;
-	Linear fLinCombZ(const Vec& p) const;
+	/* compute the linear combination of the two extent vectors to the point [this] in a plane based on the index */
+	Linear fLinComb(const Vec& p, size_t index) const;
 
 public:
 	Plane planeX() const;
@@ -248,32 +249,41 @@ public:
 	/* compute a normalized origin that is close to zero and normalize the directions as well as orient them to be perpendicular */
 	Plane norm() const;
 
-	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the Y-Z plane */
+	/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the Y-Z plane */
 	Vec projectX(const Vec& p) const;
 
-	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the X-Z plane */
+	/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the X-Z plane */
 	Vec projectY(const Vec& p) const;
 
-	/* compute the vector of if [p] is being projected onto the plane viewed orthogonally from the X-Y plane */
+	/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the X-Y plane */
 	Vec projectZ(const Vec& p) const;
 
-	/* check if [p] lies within the triangle when projected orthogonally onto the Y-Z plane */
+	/* compute the vector if [v] is being projected onto the plane */
+	Vec project(const Vec& v) const;
+
+	/* check if [p] lies within the triangle of a and b when projected orthogonally onto the Y-Z plane */
 	bool inTriangleX(const Vec& p, float precision = num::Precision) const;
 
-	/* check if [p] lies within the triangle when projected orthogonally onto the X-Z plane */
+	/* check if [p] lies within the triangle of a and b when projected orthogonally onto the X-Z plane */
 	bool inTriangleY(const Vec& p, float precision = num::Precision) const;
 
-	/* check if [p] lies within the triangle when projected orthogonally onto the X-Y plane */
+	/* check if [p] lies within the triangle of a and b when projected orthogonally onto the X-Y plane */
 	bool inTriangleZ(const Vec& p, float precision = num::Precision) const;
 
+	/* check if [p] lies within the triangle of a and b */
+	bool inTriangle(const Vec& p, bool* touching = 0, float precision = num::Precision) const;
+
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the Y-Z plane */
-	float inConeX(const Vec& p, float precision = num::Precision) const;
+	bool inConeX(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Z plane */
-	float inConeY(const Vec& p, float precision = num::Precision) const;
+	bool inConeY(const Vec& p, float precision = num::Precision) const;
 
 	/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Y plane */
-	float inConeZ(const Vec& p, float precision = num::Precision) const;
+	bool inConeZ(const Vec& p, float precision = num::Precision) const;
+
+	/* check if [p] lies within the cone of a and b */
+	bool inCone(const Vec& p, bool* touching = 0, float precision = num::Precision) const;
 
 	/* check if [p] lies on the plane */
 	bool touch(const Vec& p, float precision = num::Precision) const;
@@ -287,13 +297,13 @@ public:
 	/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */
 	Vec closest(const Vec& p) const;
 
-	/* comopute the vector of steepest ascent in the plane for the X axis */
+	/* compute the vector of steepest ascent in the plane for the X axis */
 	Vec steepestX() const;
 
-	/* comopute the vector of steepest ascent in the plane for the Y axis */
+	/* compute the vector of steepest ascent in the plane for the Y axis */
 	Vec steepestY() const;
 
-	/* comopute the vector of steepest ascent in the plane for the Z axis */
+	/* compute the vector of steepest ascent in the plane for the Z axis */
 	Vec steepestZ() const;
 
 	/* compute the intersecting line between the Y-Z plane at [xPlane] and this plane */
@@ -319,4 +329,7 @@ public:
 
 	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the X-Y plane */
 	Linear linearZ(const Vec& p) const;
+
+	/* compute the linear combination to reach the point [p] when the point lies on the plane */
+	Linear linear(const Vec& p, bool* touching = 0, float precision = num::Precision) const;
 };
