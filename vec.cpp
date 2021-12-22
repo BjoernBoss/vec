@@ -363,6 +363,60 @@ Vec Vec::Line::intersectZ(float zPlane, bool* invalid, float precision) const {
 	const float a = (zPlane - o.z) / d.z;
 	return o + d * a;
 }
+float Vec::Line::intersectXFactor(float xPlane, bool* invalid, float precision) const {
+	/* check if the line and the plane are parallel */
+	if (std::abs(d.x) <= precision) {
+		if (invalid)
+			*invalid = true;
+		return 0.0f;
+	}
+	else if (invalid)
+		*invalid = false;
+
+	/*
+	*	E: x = xPlane
+	*	Line: o + a * d
+	*	Solve for a and insert
+	*/
+	const float a = (xPlane - o.x) / d.x;
+	return a;
+}
+float Vec::Line::intersectYFactor(float yPlane, bool* invalid, float precision) const {
+	/* check if the line and the plane are parallel */
+	if (std::abs(d.y) <= precision) {
+		if (invalid)
+			*invalid = true;
+		return 0.0f;
+	}
+	else if (invalid)
+		*invalid = false;
+
+	/*
+	*	E: y = yPlane
+	*	Line: o + a * d
+	*	Solve for a and insert
+	*/
+	const float a = (yPlane - o.y) / d.y;
+	return a;
+}
+float Vec::Line::intersectZFactor(float zPlane, bool* invalid, float precision) const {
+	/* check if the line and the plane are parallel */
+	if (std::abs(d.z) <= precision) {
+		if (invalid)
+			*invalid = true;
+		return 0.0f;
+	}
+	else if (invalid)
+		*invalid = false;
+
+	/*
+	*	E: z = zPlane
+	*	Line: o + a * d
+	*	Solve for a and insert
+	*/
+	const float a = (zPlane - o.z) / d.z;
+	return a;
+}
 Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
 	/*
 	*	E: o + s * d

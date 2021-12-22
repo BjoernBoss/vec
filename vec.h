@@ -190,11 +190,20 @@ public:
 	/* compute the intersection point of this line and the Y-Z plane at [xPlane] */
 	Vec intersectX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of the line [this:x0] and the X-Z plane at [yPlane] */
+	/* compute the intersection point of this line and the X-Z plane at [yPlane] */
 	Vec intersectY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of the line [this:x0] and the X-Y plane at [zPlane] */
+	/* compute the intersection point of this line and the X-Y plane at [zPlane] */
 	Vec intersectZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale this line with to reach the intersection point of this line and the Y-Z plane at [xPlane] */
+	float intersectXFactor(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale this line with to reach the intersection point of this line and the X-Z plane at [yPlane] */
+	float intersectYFactor(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale this line with to reach the intersection point of this line and the X-Y plane at [zPlane] */
+	float intersectZFactor(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
 	/* compute the intersection point of this line and the line [l] */
 	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
