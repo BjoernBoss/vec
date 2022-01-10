@@ -14,9 +14,9 @@ namespace num {
 		if (std::isnan(a) || std::isnan(b))
 			return false;
 		if (a == 0.0f)
-			return std::abs(b) <= p;
+			return std::abs(b) <= 0.01f * p;
 		if (b == 0.0f)
-			return std::abs(a) <= p;
+			return std::abs(a) <= 0.01f * p;
 		const float _a = std::abs(a);
 		const float _b = std::abs(b);
 		return std::abs(a - b) <= std::min(_a, _b) * p;
