@@ -103,8 +103,14 @@ public:
 	/* construct a vector which is parallel to [this] but has length l */
 	Vec scale(float l) const;
 
-	/* check if [this] and [v] are linear combinations of each other */
+	/* compute the factor with which to scale [this] to be equal to vector [v] (result only valid if the vectors are parallel) */
+	float scale(const Vec& v) const;
+
+	/* check if [this] and [v] describe the same vector but scaled by any factor */
 	bool parallel(const Vec& v, float precision = num::Precision) const;
+
+	/* check if [this] and [v] describe the same vector but scaled by a positive factor */
+	bool sign(const Vec& v, float precision = num::Precision) const;
 
 	/* check if [this] and [v] describe the same vector (point into the same direction with a the same length in regard to the precision) */
 	bool same(const Vec& v, float precision = num::Precision) const;

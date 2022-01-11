@@ -141,6 +141,11 @@ Vec Vec::scale(float l) const {
 	float factor = std::sqrt((l * l) / lenSquared());
 	return *this * factor;
 }
+float Vec::scale(const Vec& v) const {
+	/* extract the largest component and use it to compute the scaling factor */
+	size_t index = v.comp(true);
+	return v.c[index] / c[index];
+}
 bool Vec::parallel(const Vec& v, float precision) const {
 	/* check if the vectors are considered zero */
 	const float lens[2] = { lenSquared(), v.lenSquared() };
@@ -151,6 +156,17 @@ bool Vec::parallel(const Vec& v, float precision) const {
 
 	/* check if the vectors point in the same direction, when scaled and transformed by their sign */
 	return num::Cmp(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
+}
+bool Vec::sign(const Vec& v, float precision) const {
+	/* check if the vectors are considered zero */
+	const float lens[2] = { lenSquared(), v.lenSquared() };
+	if (lens[0] <= precision)
+		return (lens[1] <= precision);
+	else if (lens[1] <= precision)
+		return false;
+
+	/* check if the vectors point in the same direction, when scaled */
+	return num::Cmp(dot(v), std::sqrt(lens[0] * lens[1]), precision);
 }
 bool Vec::same(const Vec& v, float precision) const {
 	return num::Cmp(dot(v), lenSquared(), precision);
