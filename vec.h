@@ -103,6 +103,9 @@ public:
 	/* construct a vector which is parallel to [this] but has length l */
 	Vec scale(float l) const;
 
+	/* construct the vector interpolated between [this] and the vector [v] at t */
+	Vec interpolate(const Vec& p, float t) const;
+
 	/* compute the factor with which to scale [this] to be equal to vector [v] (result only valid if the vectors are parallel) */
 	float scale(const Vec& v) const;
 

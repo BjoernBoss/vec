@@ -141,6 +141,13 @@ Vec Vec::scale(float l) const {
 	float factor = std::sqrt((l * l) / lenSquared());
 	return *this * factor;
 }
+Vec Vec::interpolate(const Vec& p, float t) const {
+	return Vec(
+		x + (p.x - x) * t,
+		y + (p.y - y) * t,
+		z + (p.z - z) * t
+	);
+}
 float Vec::scale(const Vec& v) const {
 	/* extract the largest component and use it to compute the scaling factor */
 	size_t index = v.comp(true);
