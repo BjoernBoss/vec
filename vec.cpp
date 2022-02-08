@@ -1,5 +1,32 @@
 #include "vec.h"
 
+/* implement the float zero comparison function */
+bool num::Zero(float a, float p) {
+	/* dont check for nan as nan will fail this check and thereby return false by default */
+	return std::abs(a) <= ZeroPrecisionFactor * p;
+}
+
+/* implement the float comparison function */
+bool num::Cmp(float a, float b, float p) {
+	if (std::isnan(a) || std::isnan(b))
+		return false;
+	if (a == 0.0f)
+		return Zero(b);
+	if (b == 0.0f)
+		return Zero(a);
+	const float _a = std::abs(a);
+	const float _b = std::abs(b);
+	return std::abs(a - b) <= std::min(_a, _b) * p;
+}
+
+/* implement the angle conversion functions */
+float num::ToAngle(float x, float y) {
+	float deg = ToDegree(std::atan2(x, y));
+	if (deg < 0)
+		deg += 360.0f;
+	return deg;
+}
+
 /* implement the vector object */
 Vec::Vec() : x(0.0f), y(0.0f), z(0.0f) {}
 Vec::Vec(float f) : x(f), y(f), z(f) {}
@@ -42,6 +69,12 @@ Vec& Vec::operator/=(float s) {
 	y /= s;
 	z /= s;
 	return *this;
+}
+bool Vec::operator==(const Vec& v) const {
+	return equal(v);
+}
+bool Vec::operator!=(const Vec& v) const {
+	return !equal(v);
 }
 float Vec::dot(const Vec& v) const {
 	return v.x * x + v.y * y + v.z * z;
@@ -137,10 +170,6 @@ Vec::Line Vec::line(const Vec& p) const {
 Vec::Plane Vec::plane(const Vec& p0, const Vec& p1) const {
 	return Plane(*this, p0 - *this, p1 - *this);
 }
-Vec Vec::scale(float l) const {
-	float factor = std::sqrt((l * l) / lenSquared());
-	return *this * factor;
-}
 Vec Vec::interpolate(const Vec& p, float t) const {
 	return Vec(
 		x + (p.x - x) * t,
@@ -148,50 +177,64 @@ Vec Vec::interpolate(const Vec& p, float t) const {
 		z + (p.z - z) * t
 	);
 }
+Vec Vec::scale(float l) const {
+	float factor = std::sqrt((l * l) / lenSquared());
+	return *this * factor;
+}
 float Vec::scale(const Vec& v) const {
 	/* extract the largest component and use it to compute the scaling factor */
 	size_t index = v.comp(true);
 	return v.c[index] / c[index];
 }
 bool Vec::parallel(const Vec& v, float precision) const {
-	/* check if the vectors are considered zero */
-	const float lens[2] = { lenSquared(), v.lenSquared() };
-	if (lens[0] <= precision)
-		return (lens[1] <= precision);
-	else if (lens[1] <= precision)
+	/* extract the largest components and check if the vectors are considered zero */
+	const size_t largest[2] = { comp(true), v.comp(true) };
+	if (std::abs(c[largest[0]]) <= precision)
+		return (std::abs(v.c[largest[1]]) <= precision);
+	else if (std::abs(v.c[largest[1]]) <= precision)
 		return false;
 
-	/* check if the vectors point in the same direction, when scaled and transformed by their sign */
-	return num::Cmp(std::abs(dot(v)), std::sqrt(lens[0] * lens[1]), precision);
+	/* compute the factor with which to scale the other vector */
+	const float f = c[largest[0]] / v.c[largest[1]];
+
+	/* check if the vectors are equal when scaled */
+	return equal(v * f, precision);
 }
 bool Vec::sign(const Vec& v, float precision) const {
-	/* check if the vectors are considered zero */
-	const float lens[2] = { lenSquared(), v.lenSquared() };
-	if (lens[0] <= precision)
-		return (lens[1] <= precision);
-	else if (lens[1] <= precision)
+	/* extract the largest components and check if the vectors are considered zero */
+	const size_t largest[2] = { comp(true), v.comp(true) };
+	if (std::abs(c[largest[0]]) <= precision)
+		return (std::abs(v.c[largest[1]]) <= precision);
+	else if (std::abs(v.c[largest[1]]) <= precision)
 		return false;
 
-	/* check if the vectors point in the same direction, when scaled */
-	return num::Cmp(dot(v), std::sqrt(lens[0] * lens[1]), precision);
+	/* compute the factor with which to scale the other vector and ensure that the factor is positive */
+	const float f = c[largest[0]] / v.c[largest[1]];
+	if (f < 0.0f)
+		return false;
+
+	/* check if the vectors are equal when scaled */
+	return equal(v * f, precision);
 }
-bool Vec::same(const Vec& v, float precision) const {
+bool Vec::match(const Vec& v, float precision) const {
 	return num::Cmp(dot(v), lenSquared(), precision);
 }
-bool Vec::identical(const Vec& v, float precision) const {
-	return num::Cmp((v - *this).lenSquared(), 0.0f, precision);
+bool Vec::equal(const Vec& v, float precision) const {
+	/* dont subtract and then compare with zero as small errors will have a much larger effect on
+	*	the result due to the canceling effects of subtraction on the information */
+	return num::Cmp(x, v.x, precision) && num::Cmp(y, v.y, precision) && num::Cmp(z, v.z, precision);
 }
 bool Vec::zeroX(float precision) const {
-	return num::Cmp(dot(planeX()), lenSquared(), precision);
+	return num::Zero(x, precision);
 }
 bool Vec::zeroY(float precision) const {
-	return num::Cmp(dot(planeY()), lenSquared(), precision);
+	return num::Zero(y, precision);
 }
 bool Vec::zeroZ(float precision) const {
-	return num::Cmp(dot(planeZ()), lenSquared(), precision);
+	return num::Zero(z, precision);
 }
 bool Vec::zero(float precision) const {
-	return num::Cmp(0.0f, lenSquared(), precision);
+	return num::Zero(lenSquared(), precision);
 }
 Vec Vec::perpendicular(const Vec& v) const {
 	/*
@@ -249,15 +292,14 @@ bool Vec::Line::touch(const Vec& p, float precision) const {
 	/* compute the point on the line where the given point is expected to be */
 	const Vec t = o + d * s;
 
-	/* compare the point on the line with the given point */
-	const float lens[2] = { p.lenSquared(), t.lenSquared() };
-	return num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
+	/* ensure that the points are equal */
+	return p.equal(t, precision);
 }
-bool Vec::Line::same(const Line& l, float precision) const {
+bool Vec::Line::equal(const Line& l, float precision) const {
 	return l.touch(o, precision) && l.d.parallel(d, precision);
 }
 bool Vec::Line::identical(const Line& l, float precision) const {
-	return l.o.identical(o, precision) && l.d.identical(d, precision);
+	return l.o.equal(o, precision) && l.d.equal(d, precision);
 }
 Vec Vec::Line::closest(const Vec& p) const {
 	/*
@@ -292,7 +334,7 @@ Vec::Line Vec::Line::closest(const Line& l) const {
 	const Vec v = d.cross(l.d);
 
 	/* check if the lines run in parallel */
-	if (v.same(Vec()))
+	if (v.zero())
 		return Line(o, l.closest(o));
 
 	/* compute the two scalars */
@@ -320,7 +362,7 @@ Vec::Line::Linear Vec::Line::closestFactor(const Line& l) const {
 	const Vec v = d.cross(l.d);
 
 	/* check if the lines run in parallel */
-	if (v.same(Vec()))
+	if (v.zero())
 		return Linear(0.0f, l.closestFactor(o));
 
 	/* compute the two scalars */
@@ -472,7 +514,7 @@ Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
 		const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		pt = o + d * s;
-		on = pt.same(l.o + l.d * t);
+		on = pt.equal(l.o + l.d * t, precision);
 	}
 
 	/* return the point if it is on the line */
@@ -510,7 +552,7 @@ Vec::Line::Linear Vec::Line::intersectFactor(const Line& l, bool* invalid, float
 		lin.s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		lin.t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		Vec pt = o + d * lin.s;
-		on = pt.same(l.o + l.d * lin.t);
+		on = pt.equal(l.o + l.d * lin.t, precision);
 	}
 
 	/* return the point if it is on the line */
@@ -668,14 +710,13 @@ bool Vec::Plane::touch(const Vec& p, float precision) const {
 	const Vec t = o + a * r.s + b * r.t;
 
 	/* compare the point on the plane with the given point */
-	const float lens[2] = { p.lenSquared(), t.lenSquared() };
-	return num::Cmp(p.dot(t), std::sqrt(lens[0] * lens[1]), precision);
+	return p.equal(t, precision);
 }
-bool Vec::Plane::same(const Plane& p, float precision) const {
+bool Vec::Plane::equal(const Plane& p, float precision) const {
 	return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
 }
 bool Vec::Plane::identical(const Plane& p, float precision) const {
-	return p.o.identical(o, precision) && p.a.identical(a, precision) && p.b.identical(b, precision);
+	return p.o.equal(o, precision) && p.a.equal(a, precision) && p.b.equal(b, precision);
 }
 Vec Vec::Plane::closest(const Vec& p) const {
 	/*

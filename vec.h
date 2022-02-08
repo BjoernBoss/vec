@@ -6,35 +6,25 @@
 
 /* define the float number helper */
 namespace num {
-	static constexpr float ConstPi = 3.1415926536f;
+	static constexpr float Pi = 3.1415926536f;
+	static constexpr float SqrtTwo = 1.4142135624f;
+	static constexpr float Precision = 0.00001f;
+	static constexpr float ZeroPrecisionFactor = 0.01f;
+
+	/* define the float zero comparison function */
+	bool Zero(float a, float p = Precision);
 
 	/* define the float comparison function */
-	static constexpr float Precision = 0.00001f;
-	static bool Cmp(float a, float b, float p = Precision) {
-		if (std::isnan(a) || std::isnan(b))
-			return false;
-		if (a == 0.0f)
-			return std::abs(b) <= 0.01f * p;
-		if (b == 0.0f)
-			return std::abs(a) <= 0.01f * p;
-		const float _a = std::abs(a);
-		const float _b = std::abs(b);
-		return std::abs(a - b) <= std::min(_a, _b) * p;
-	}
+	bool Cmp(float a, float b, float p = Precision);
 
 	/* define the angle conversion functions */
 	static constexpr float ToRadian(float deg) {
-		return (deg * ConstPi) / 180.0f;
+		return (deg * Pi) / 180.0f;
 	}
 	static constexpr float ToDegree(float deg) {
-		return (deg * 180.0f) / ConstPi;
+		return (deg * 180.0f) / Pi;
 	}
-	static float ToAngle(float x, float y) {
-		float deg = ToDegree(std::atan2(x, y));
-		if (deg < 0)
-			deg += 360.0f;
-		return deg;
-	}
+	float ToAngle(float x, float y);
 }
 
 /* define the vector object */
@@ -70,6 +60,8 @@ public:
 	Vec& operator-=(const Vec& v);
 	Vec& operator*=(float s);
 	Vec& operator/=(float s);
+	bool operator==(const Vec& v) const;
+	bool operator!=(const Vec& v) const;
 
 public:
 	float dot(const Vec& v) const;
@@ -100,11 +92,11 @@ public:
 	/* construct the plane [this:(p0-this):(p1-this)] */
 	Plane plane(const Vec& p0, const Vec& p1) const;
 
-	/* construct a vector which is parallel to [this] but has length l */
-	Vec scale(float l) const;
-
 	/* construct the vector interpolated between [this] and the vector [v] at t */
 	Vec interpolate(const Vec& p, float t) const;
+
+	/* construct a vector which is parallel to [this] but has length l */
+	Vec scale(float l) const;
 
 	/* compute the factor with which to scale [this] to be equal to vector [v] (result only valid if the vectors are parallel) */
 	float scale(const Vec& v) const;
@@ -115,11 +107,11 @@ public:
 	/* check if [this] and [v] describe the same vector but scaled by a positive factor */
 	bool sign(const Vec& v, float precision = num::Precision) const;
 
-	/* check if [this] and [v] describe the same vector (point into the same direction with a the same length in regard to the precision) */
-	bool same(const Vec& v, float precision = num::Precision) const;
+	/* check if [this] and [v] describe the same vector (point into the same direction with the same length in regard to the precision and the magnitude of the separate components) */
+	bool match(const Vec& v, float precision = num::Precision) const;
 
 	/* check if [this] and [v] are identical (all components are weighted the same) */
-	bool identical(const Vec& v, float precision = num::Precision) const;
+	bool equal(const Vec& v, float precision = num::Precision) const;
 
 	/* check if the x-component of this vector is negligible */
 	bool zeroX(float precision = num::Precision) const;
@@ -179,7 +171,7 @@ public:
 	bool touch(const Vec& p, float precision = num::Precision) const;
 
 	/* check if the line [l] and this line describe the same line */
-	bool same(const Line& l, float precision = num::Precision) const;
+	bool equal(const Line& l, float precision = num::Precision) const;
 
 	/* check if the line [l] and this line describe the identically same line */
 	bool identical(const Line& l, float precision = num::Precision) const;
@@ -307,7 +299,7 @@ public:
 	bool touch(const Vec& p, float precision = num::Precision) const;
 
 	/* check if the plane [p] and this plane describe the same plane */
-	bool same(const Plane& p, float precision = num::Precision) const;
+	bool equal(const Plane& p, float precision = num::Precision) const;
 
 	/* check if the plane [p] and this plane describe the identically same plane */
 	bool identical(const Plane& p, float precision = num::Precision) const;
