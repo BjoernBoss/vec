@@ -73,9 +73,9 @@ public:
 	float crossY(const Vec& v) const;
 	float crossZ(const Vec& v) const;
 	Vec norm() const;
-	Vec planeX() const;
-	Vec planeY() const;
-	Vec planeZ() const;
+	Vec planeX(float xPlane = 0.0f) const;
+	Vec planeY(float yPlane = 0.0f) const;
+	Vec planeZ(float zPlane = 0.0f) const;
 	Vec rotateX(float a) const;
 	Vec rotateY(float a) const;
 	Vec rotateZ(float a) const;
@@ -156,9 +156,9 @@ public:
 	Line(const Vec& o, const Vec& d);
 
 public:
-	Line planeX() const;
-	Line planeY() const;
-	Line planeZ() const;
+	Line planeX(float xPlane = 0.0f) const;
+	Line planeY(float yPlane = 0.0f) const;
+	Line planeZ(float zPlane = 0.0f) const;
 
 public:
 	/* compute a point on this line */
@@ -206,10 +206,10 @@ public:
 	/* compute the factor to scale this line with to reach the intersection point of this line and the X-Y plane at [zPlane] */
 	float intersectZFactor(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of this line and the line [l] */
+	/* compute the intersection point of this line and the line [l] and in case of no intersection returns an empty vector */
 	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the factor to scale this lines direction and [l]'s direction with to intersect the lines */
+	/* compute the factor to scale this lines direction and [l]'s direction with to intersect the lines and in case of no intersection returns 0 */
 	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 };
 
@@ -239,9 +239,9 @@ private:
 	Linear fLinComb(const Vec& p, size_t index) const;
 
 public:
-	Plane planeX() const;
-	Plane planeY() const;
-	Plane planeZ() const;
+	Plane planeX(float xPlane = 0.0f) const;
+	Plane planeY(float yPlane = 0.0f) const;
+	Plane planeZ(float zPlane = 0.0f) const;
 
 public:
 	/* compute the normal vector of the plane */

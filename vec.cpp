@@ -117,14 +117,14 @@ Vec Vec::norm() const {
 	float l = len();
 	return Vec(x / l, y / l, z / l);
 }
-Vec Vec::planeX() const {
-	return Vec(0.0f, y, z);
+Vec Vec::planeX(float xPlane) const {
+	return Vec(xPlane, y, z);
 }
-Vec Vec::planeY() const {
-	return Vec(x, 0.0f, z);
+Vec Vec::planeY(float yPlane) const {
+	return Vec(x, yPlane, z);
 }
-Vec Vec::planeZ() const {
-	return Vec(x, y, 0.0f);
+Vec Vec::planeZ(float zPlane) const {
+	return Vec(x, y, zPlane);
 }
 Vec Vec::rotateX(float a) const {
 	a = num::ToRadian(a);
@@ -258,14 +258,14 @@ Vec::Line::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
 Vec::Line::Line() {}
 Vec::Line::Line(const Vec& _d) : d(_d) {}
 Vec::Line::Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
-Vec::Line Vec::Line::planeX() const {
-	return Line(o.planeX(), d.planeX());
+Vec::Line Vec::Line::planeX(float xPlane) const {
+	return Line(o.planeX(xPlane), d.planeX(xPlane));
 }
-Vec::Line Vec::Line::planeY() const {
-	return Line(o.planeY(), d.planeY());
+Vec::Line Vec::Line::planeY(float yPlane) const {
+	return Line(o.planeY(yPlane), d.planeY(yPlane));
 }
-Vec::Line Vec::Line::planeZ() const {
-	return Line(o.planeZ(), d.planeZ());
+Vec::Line Vec::Line::planeZ(float zPlane) const {
+	return Line(o.planeZ(zPlane), d.planeZ(zPlane));
 }
 Vec Vec::Line::point(float f) const {
 	return o + d * f;
@@ -514,7 +514,7 @@ Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
 		const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		pt = o + d * s;
-		on = pt.equal(l.o + l.d * t, precision);
+		on = num::Cmp(pt.c[i], (l.o + l.d * t).c[i], precision);
 	}
 
 	/* return the point if it is on the line */
@@ -552,7 +552,7 @@ Vec::Line::Linear Vec::Line::intersectFactor(const Line& l, bool* invalid, float
 		lin.s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		lin.t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 		Vec pt = o + d * lin.s;
-		on = pt.equal(l.o + l.d * lin.t, precision);
+		on = num::Cmp(pt.c[i], (l.o + l.d * lin.t).c[i], precision);
 	}
 
 	/* return the point if it is on the line */
@@ -585,14 +585,14 @@ Vec::Plane::Linear Vec::Plane::fLinComb(const Vec& p, size_t index) const {
 	const float _t = (a.c[_0] * _v1 - a.c[_1] * _v0) / divisor;
 	return Linear(_s, _t);
 }
-Vec::Plane Vec::Plane::planeX() const {
-	return Plane(o.planeX(), a.planeX(), b.planeX());
+Vec::Plane Vec::Plane::planeX(float xPlane) const {
+	return Plane(o.planeX(xPlane), a.planeX(xPlane), b.planeX(xPlane));
 }
-Vec::Plane Vec::Plane::planeY() const {
-	return Plane(o.planeY(), a.planeY(), b.planeY());
+Vec::Plane Vec::Plane::planeY(float yPlane) const {
+	return Plane(o.planeY(yPlane), a.planeY(yPlane), b.planeY(yPlane));
 }
-Vec::Plane Vec::Plane::planeZ() const {
-	return Plane(o.planeZ(), a.planeZ(), b.planeZ());
+Vec::Plane Vec::Plane::planeZ(float zPlane) const {
+	return Plane(o.planeZ(zPlane), a.planeZ(zPlane), b.planeZ(zPlane));
 }
 Vec Vec::Plane::normal() const {
 	return a.cross(b);
