@@ -27,7 +27,10 @@ namespace num {
 	float ToAngle(float x, float y);
 }
 
-/* define the vector object */
+/* define the vector object
+*	- right-handed system
+*	- counterclockwise rotations when the corresponding axis points towards the observer
+*/
 struct Vec {
 public:
 	/* defines the component layout in memory */
@@ -76,9 +79,6 @@ public:
 	Vec planeX(float xPlane = 0.0f) const;
 	Vec planeY(float yPlane = 0.0f) const;
 	Vec planeZ(float zPlane = 0.0f) const;
-	Vec rotateX(float a) const;
-	Vec rotateY(float a) const;
-	Vec rotateZ(float a) const;
 	size_t comp(bool largest) const;
 
 public:
@@ -86,20 +86,41 @@ public:
 	struct Plane;
 
 public:
+	/* compute the vector when rotating [this] by [a] degrees counterclockwise along the x axis when it points towards the observer */
+	Vec rotateX(float a) const;
+
+	/* compute the vector when rotating [this] by [a] degrees counterclockwise along the y axis when it points towards the observer */
+	Vec rotateY(float a) const;
+
+	/* compute the vector when rotating [this] by [a] degrees counterclockwise along the z axis when it points towards the observer */
+	Vec rotateZ(float a) const;
+
+	/* compute the angle to rotate [r] by on the x axis to match the vector [this] when projected onto the y/z plane [-180; 180] */
+	float angleX(const Vec& r) const;
+
+	/* compute the angle to rotate [r] by on the y axis to match the vector [this] when projected onto the x/z plane [-180; 180] */
+	float angleY(const Vec& r) const;
+
+	/* compute the angle to rotate [r] by on the z axis to match the vector [this] when projected onto the x/y plane [-180; 180] */
+	float angleZ(const Vec& r) const;
+
 	/* construct the line [this:(p-this)] */
 	Line line(const Vec& p) const;
 
 	/* construct the plane [this:(p0-this):(p1-this)] */
 	Plane plane(const Vec& p0, const Vec& p1) const;
 
-	/* construct the vector interpolated between [this] and the vector [v] at t */
+	/* construct a vector interpolated between [this] and the vector [v] at [t] */
 	Vec interpolate(const Vec& p, float t) const;
 
-	/* construct a vector which is parallel to [this] but has length l */
-	Vec scale(float l) const;
+	/* construct a vector which is parallel to [this] but has length [l] */
+	Vec rescale(float l) const;
 
 	/* compute the factor with which to scale [this] to be equal to vector [v] (result only valid if the vectors are parallel) */
-	float scale(const Vec& v) const;
+	float delta(const Vec& v) const;
+
+	/* construct a vector parallel to [this] but scaled by [f] */
+	Vec scale(float f) const;
 
 	/* check if [this] and [v] describe the same vector but scaled by any factor */
 	bool parallel(const Vec& v, float precision = num::Precision) const;
@@ -132,7 +153,7 @@ public:
 	Vec project(const Vec& v) const;
 
 	/* compute the factor which multiplied with [this] will result in a projection of [v] onto [this] and thereby parallel to [this] */
-	float projectFactor(const Vec& v) const;
+	float projectf(const Vec& v) const;
 };
 
 /* define the line object */
@@ -155,62 +176,87 @@ public:
 	Line(const Vec& d);
 	Line(const Vec& o, const Vec& d);
 
+private:
+	/* compute the linear combination of the line [this] and line [l] to intersect based on the two other axes than the index axis */
+	Linear fLinComb(const Line& l, size_t index, bool& parallel, float precision) const;
+
 public:
 	Line planeX(float xPlane = 0.0f) const;
 	Line planeY(float yPlane = 0.0f) const;
 	Line planeZ(float zPlane = 0.0f) const;
 
 public:
-	/* compute a point on this line */
-	Vec point(float f) const;
+	/* compute a point on [this] line */
+	Vec point(float t) const;
 
 	/* compute a normalized origin that is close to zero normalize the direction */
 	Line norm() const;
 
-	/* check if [p] lies on the line */
+	/* check if [p] lies on line [this] */
 	bool touch(const Vec& p, float precision = num::Precision) const;
 
-	/* check if the line [l] and this line describe the same line */
+	/* returns a position along the [this] line where the point [p] lies (result only valid if it lies on the line) */
+	float find(const Vec& p) const;
+
+	/* check if the line [l] and line [this] describe the same line */
 	bool equal(const Line& l, float precision = num::Precision) const;
 
-	/* check if the line [l] and this line describe the identically same line */
+	/* check if the line [l] and line [this] describe the identically same line */
 	bool identical(const Line& l, float precision = num::Precision) const;
+
+	/* compute the factor for which line [this] reaches the point closest to p (automatically perpendicular) */
+	float closestf(const Vec& p) const;
 
 	/* compute the shortest vector which connects [p] to a point on the line (automatically perpendicular) */
 	Vec closest(const Vec& p) const;
 
-	/* compute the factor for which this line reaches the point closest to p (automatically perpendicular) */
-	float closestFactor(const Vec& p) const;
+	/* compute the shortest line which intersects line [this] and the line [l] */
+	Linear closestf(const Line& l) const;
 
-	/* compute the shortest line which intersects this line and the line [l] */
+	/* compute the shortest line which intersects line [this] and the line [l] */
 	Line closest(const Line& l) const;
 
-	/* compute the shortest line which intersects this line and the line [l] */
-	Linear closestFactor(const Line& l) const;
+	/* compute the factor to scale line [this] with to reach the intersection point of this line and the Y-Z plane at [xPlane] (invalid if parallel: returns [this] origin) */
+	float intersectPlaneXf(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of this line and the Y-Z plane at [xPlane] */
-	Vec intersectX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersection point of line [this] and the Y-Z plane at [xPlane] (invalid if parallel: returns null vector) */
+	Vec intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of this line and the X-Z plane at [yPlane] */
-	Vec intersectY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the factor to scale line [this] with to reach the intersection point of this line and the X-Z plane at [yPlane] (invalid if parallel: returns [this] origin) */
+	float intersectPlaneYf(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of this line and the X-Y plane at [zPlane] */
-	Vec intersectZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersection point of line [this] and the X-Z plane at [yPlane] (invalid if parallel: returns null vector) */
+	Vec intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the factor to scale this line with to reach the intersection point of this line and the Y-Z plane at [xPlane] */
-	float intersectXFactor(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the factor to scale line [this] with to reach the intersection point of this line and the X-Y plane at [zPlane] (invalid if parallel: returns [this] origin) */
+	float intersectPlaneZf(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the factor to scale this line with to reach the intersection point of this line and the X-Z plane at [yPlane] */
-	float intersectYFactor(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersection point of line [this] and the X-Y plane at [zPlane] (invalid if parallel: returns null vector) */
+	Vec intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the factor to scale this line with to reach the intersection point of this line and the X-Y plane at [zPlane] */
-	float intersectZFactor(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Y plane (invalid if no intersection point: returns 0, 0) */
+	Linear intersectXf(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of this line and the line [l] and in case of no intersection returns an empty vector */
+	/* compute the intersection point of line [this] and line [l] when viewed in the X-Y plane (invalid if no intersection point: returns [this] origin) */
+	Vec intersectX(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Z plane (invalid if no intersection point: returns 0, 0) */
+	Linear intersectYf(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the intersection point of line [this] and line [l] when viewed in the X-Z plane (invalid if no intersection point: returns [this] origin) */
+	Vec intersectY(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the Y-Z plane (invalid if no intersection point: returns 0, 0) */
+	Linear intersectZf(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the intersection point of line [this] and line [l] when viewed in the Y-Z plane (invalid if no intersection point: returns [this] origin) */
+	Vec intersectZ(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the factor to scale line [this] and line [l] with to intersect the lines (invalid if no intersection point: returns 0, 0) */
+	Linear intersectf(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the intersection point of line [this] and the line [l] (invalid if no intersection point: returns [this] origin) */
 	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
-
-	/* compute the factor to scale this lines direction and [l]'s direction with to intersect the lines and in case of no intersection returns 0 */
-	Linear intersectFactor(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 };
 
 /* define the plane object */
@@ -235,7 +281,7 @@ public:
 	Plane(const Vec& o, const Vec& a, const Vec& b);
 
 private:
-	/* compute the linear combination of the two extent vectors to the point [this] in a plane based on the index */
+	/* compute the linear combination of the two extent vectors to the point in a plane based on the index axis */
 	Linear fLinComb(const Vec& p, size_t index) const;
 
 public:
@@ -250,10 +296,10 @@ public:
 	/* compute the center point of the triangle produced by the two extent vectors and the origin */
 	Vec center() const;
 
-	/* compute a point on this plane */
+	/* compute a point on plane [this] */
 	Vec point(float s, float t) const;
 
-	/* compute a point on this plane */
+	/* compute a point on plane [this] */
 	Vec point(const Linear& lin) const;
 
 	/* compute a normalized origin that is close to zero and normalize the directions as well as orient them to be perpendicular */
@@ -298,10 +344,10 @@ public:
 	/* check if [p] lies on the plane */
 	bool touch(const Vec& p, float precision = num::Precision) const;
 
-	/* check if the plane [p] and this plane describe the same plane */
+	/* check if the plane [p] and plane [this] describe the same plane */
 	bool equal(const Plane& p, float precision = num::Precision) const;
 
-	/* check if the plane [p] and this plane describe the identically same plane */
+	/* check if the plane [p] and plane [this] describe the identically same plane */
 	bool identical(const Plane& p, float precision = num::Precision) const;
 
 	/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */
@@ -316,28 +362,31 @@ public:
 	/* compute the vector of steepest ascent in the plane for the Z axis */
 	Vec steepestZ() const;
 
-	/* compute the intersecting line between the Y-Z plane at [xPlane] and this plane */
-	Line intersectX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersecting line between the Y-Z plane at [xPlane] and plane [this] (invalid if parallel: returns null line) */
+	Line intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersecting line between the X-Z plane at [yPlane] and this plane */
-	Line intersectY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersecting line between the X-Z plane at [yPlane] and plane [this] (invalid if parallel: returns null line) */
+	Line intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersecting line between the X-Y plane at [zPlane] and this plane */
-	Line intersectZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
+	/* compute the intersecting line between the X-Y plane at [zPlane] and plane [this] (invalid if parallel: returns null line) */
+	Line intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection line of the this and the plane [p] */
+	/* compute the intersection line of the plane [this] and the plane [p] (invalid if parallel: returns null line) */
 	Line intersect(const Plane& p, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the intersection point of the line [l] and this plane */
+	/* compute the intersection factors of the plane [this] and the line [l] (invalid if parallel: returns 0, 0) */
+	Linear intersectf(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
+
+	/* compute the intersection point of the plane [this] and the line [l] (invalid if parallel: returns null vector) */
 	Vec intersect(const Line& l, bool* invalid = 0, float precision = num::Precision) const;
 
-	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the Y-Z plane */
+	/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the Y-Z plane */
 	Linear linearX(const Vec& p) const;
 
-	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the X-Z plane */
+	/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the X-Z plane */
 	Linear linearY(const Vec& p) const;
 
-	/* compute the linear combination to reach the point [p] on this plane when projected orthogonally onto the X-Y plane */
+	/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the X-Y plane */
 	Linear linearZ(const Vec& p) const;
 
 	/* compute the linear combination to reach the point [p] when the point lies on the plane */

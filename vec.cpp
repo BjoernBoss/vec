@@ -126,6 +126,17 @@ Vec Vec::planeY(float yPlane) const {
 Vec Vec::planeZ(float zPlane) const {
 	return Vec(x, y, zPlane);
 }
+size_t Vec::comp(bool largest) const {
+	size_t index = 0;
+
+	/* iterate through the components and check if one is larger */
+	for (size_t i = 1; i < 3; i++) {
+		if (largest ? std::abs(c[index]) >= std::abs(c[i]) : std::abs(c[index]) <= std::abs(c[i]))
+			continue;
+		index = i;
+	}
+	return index;
+}
 Vec Vec::rotateX(float a) const {
 	a = num::ToRadian(a);
 	const float sa = std::sin(a);
@@ -153,16 +164,29 @@ Vec Vec::rotateZ(float a) const {
 		x * sa + y * ca,
 		z);
 }
-size_t Vec::comp(bool largest) const {
-	size_t index = 0;
+float Vec::angleX(const Vec& r) const {
+	Vec ref = r.planeX();
+	Vec flat = planeX();
 
-	/* iterate through the components and check if one is larger */
-	for (size_t i = 1; i < 3; i++) {
-		if (largest ? std::abs(c[index]) >= std::abs(c[i]) : std::abs(c[index]) <= std::abs(c[i]))
-			continue;
-		index = i;
-	}
-	return index;
+	/* compute the angle between the two vectors and correct its sign */
+	float angle = ref.angle(flat);
+	return (ref.crossX(flat) > 0.0f) ? -angle : angle;
+}
+float Vec::angleY(const Vec& r) const {
+	Vec ref = r.planeY();
+	Vec flat = planeY();
+
+	/* compute the angle between the two vectors and correct its sign */
+	float angle = ref.angle(flat);
+	return (ref.crossY(flat) > 0.0f) ? -angle : angle;
+}
+float Vec::angleZ(const Vec& r) const {
+	Vec ref = r.planeZ();
+	Vec flat = planeZ();
+
+	/* compute the angle between the two vectors and correct its sign */
+	float angle = ref.angle(flat);
+	return (ref.crossZ(flat) > 0.0f) ? -angle : angle;
 }
 Vec::Line Vec::line(const Vec& p) const {
 	return Line(*this, p - *this);
@@ -177,14 +201,17 @@ Vec Vec::interpolate(const Vec& p, float t) const {
 		z + (p.z - z) * t
 	);
 }
-Vec Vec::scale(float l) const {
+Vec Vec::rescale(float l) const {
 	float factor = std::sqrt((l * l) / lenSquared());
 	return *this * factor;
 }
-float Vec::scale(const Vec& v) const {
+float Vec::delta(const Vec& v) const {
 	/* extract the largest component and use it to compute the scaling factor */
-	size_t index = v.comp(true);
+	size_t index = comp(true);
 	return v.c[index] / c[index];
+}
+Vec Vec::scale(float f) const {
+	return Vec(x * f, y * f, z * f);
 }
 bool Vec::parallel(const Vec& v, float precision) const {
 	/* extract the largest components and check if the vectors are considered zero */
@@ -248,7 +275,7 @@ Vec Vec::project(const Vec& v) const {
 	float factor = dot(v) / lenSquared();
 	return *this * factor;
 }
-float Vec::projectFactor(const Vec& v) const {
+float Vec::projectf(const Vec& v) const {
 	return dot(v) / lenSquared();
 }
 
@@ -258,6 +285,30 @@ Vec::Line::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
 Vec::Line::Line() {}
 Vec::Line::Line(const Vec& _d) : d(_d) {}
 Vec::Line::Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
+Vec::Line::Linear Vec::Line::fLinComb(const Line& l, size_t index, bool& parallel, float precision) const {
+	/*
+	*	E: o + s * d
+	*	F: l.o + t * l.d
+	*
+	*	Solve for s and insert yields: s = l.d.y * (l.o.x - o.x) - l.d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
+	*								   t = d.y * (l.o.x - o.x) - d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
+	*	(same for x-z/y-z)
+	*/
+
+	/* extract the two components to work with and compute the divisor */
+	const size_t _0 = (index + 1) % 3;
+	const size_t _1 = (index + 2) % 3;
+	const float divisor = d.c[_0] * l.d.c[_1] - d.c[_1] * l.d.c[_0];
+
+	/* check if the two lines are parallel */
+	if (parallel = (std::abs(divisor) <= precision))
+		return Linear();
+
+	/* compute the linear combination */
+	const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
+	const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
+	return Linear(s, t);
+}
 Vec::Line Vec::Line::planeX(float xPlane) const {
 	return Line(o.planeX(xPlane), d.planeX(xPlane));
 }
@@ -267,8 +318,8 @@ Vec::Line Vec::Line::planeY(float yPlane) const {
 Vec::Line Vec::Line::planeZ(float zPlane) const {
 	return Line(o.planeZ(zPlane), d.planeZ(zPlane));
 }
-Vec Vec::Line::point(float f) const {
-	return o + d * f;
+Vec Vec::Line::point(float t) const {
+	return o + d * t;
 }
 Vec::Line Vec::Line::norm() const {
 	/*
@@ -295,28 +346,56 @@ bool Vec::Line::touch(const Vec& p, float precision) const {
 	/* ensure that the points are equal */
 	return p.equal(t, precision);
 }
+float Vec::Line::find(const Vec& p) const {
+	/* extract the largest component of the direction and use it to compute the scaling factor */
+	size_t index = d.comp(true);
+	return (p.c[index] - o.c[index]) / d.c[index];
+}
 bool Vec::Line::equal(const Line& l, float precision) const {
 	return l.touch(o, precision) && l.d.parallel(d, precision);
 }
 bool Vec::Line::identical(const Line& l, float precision) const {
 	return l.o.equal(o, precision) && l.d.equal(d, precision);
 }
-Vec Vec::Line::closest(const Vec& p) const {
-	/*
-	*	o + a * d = p + v
-	*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
-	*	Solve for a
-	*/
-	const float a = (p - o).dot(d) / d.dot(d);
-	return o + d * a - p;
-}
-float Vec::Line::closestFactor(const Vec& p) const {
+float Vec::Line::closestf(const Vec& p) const {
 	/*
 	*	o + a * d = p + v
 	*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
 	*	Solve for a
 	*/
 	return (p - o).dot(d) / d.dot(d);
+}
+Vec Vec::Line::closest(const Vec& p) const {
+	const float a = closestf(p);
+	return o + d * a - p;
+}
+Vec::Line::Linear Vec::Line::closestf(const Line& l) const {
+	/*
+	*	E: o + s * d
+	*	F: l.o + t * l.d
+	*
+	*	To solve: o + s * d + r * v = l.o + t * l.d
+	*	both d and l.d have to be perpendicular to v
+	*		=> v = d x l.d
+	*
+	*	Solution: r = ((l.o - o) * (d x l.d)) / v * (d x l.d)
+	*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
+	*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
+	*/
+	const Vec v = d.cross(l.d);
+
+	/* check if the lines run in parallel */
+	if (v.zero())
+		return Linear(0.0f, l.closestf(o));
+
+	/* compute the two scalars */
+	const float tmp = v.dot(v);
+	const Vec df = l.o - o;
+	const float s = -df.dot(v.cross(l.d)) / tmp;
+	const float t = -df.dot(v.cross(d)) / tmp;
+
+	/* return the two factors */
+	return Linear(s, t);
 }
 Vec::Line Vec::Line::closest(const Line& l) const {
 	/*
@@ -343,92 +422,10 @@ Vec::Line Vec::Line::closest(const Line& l) const {
 	const float r = df.dot(v) / tmp;
 	const float s = -df.dot(v.cross(l.d)) / tmp;
 
-	/* compute the final result */
+	/* return the final line */
 	return Line(o + d * s, v * r);
 }
-Vec::Line::Linear Vec::Line::closestFactor(const Line& l) const {
-	/*
-	*	E: o + s * d
-	*	F: l.o + t * l.d
-	*
-	*	To solve: o + s * d + r * v = l.o + t * l.d
-	*	both d and l.d have to be perpendicular to v
-	*		=> v = d x l.d
-	*
-	*	Solution: r = ((l.o - o) * (d x l.d)) / v * (d x l.d)
-	*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
-	*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
-	*/
-	const Vec v = d.cross(l.d);
-
-	/* check if the lines run in parallel */
-	if (v.zero())
-		return Linear(0.0f, l.closestFactor(o));
-
-	/* compute the two scalars */
-	const float tmp = v.dot(v);
-	const Vec df = l.o - o;
-	const float s = -df.dot(v.cross(l.d)) / tmp;
-	const float t = -df.dot(v.cross(d)) / tmp;
-
-	/* return the two factors */
-	return Linear(s, t);
-}
-Vec Vec::Line::intersectX(float xPlane, bool* invalid, float precision) const {
-	/* check if the line and the plane are parallel */
-	if (std::abs(d.x) <= precision) {
-		if (invalid)
-			*invalid = true;
-		return Vec();
-	}
-	else if (invalid)
-		*invalid = false;
-
-	/*
-	*	E: x = xPlane
-	*	Line: o + a * d
-	*	Solve for a and insert
-	*/
-	const float a = (xPlane - o.x) / d.x;
-	return o + d * a;
-}
-Vec Vec::Line::intersectY(float yPlane, bool* invalid, float precision) const {
-	/* check if the line and the plane are parallel */
-	if (std::abs(d.y) <= precision) {
-		if (invalid)
-			*invalid = true;
-		return Vec();
-	}
-	else if (invalid)
-		*invalid = false;
-
-	/*
-	*	E: y = yPlane
-	*	Line: o + a * d
-	*	Solve for a and insert
-	*/
-	const float a = (yPlane - o.y) / d.y;
-	return o + d * a;
-}
-Vec Vec::Line::intersectZ(float zPlane, bool* invalid, float precision) const {
-	/* check if the line and the plane are parallel */
-	if (std::abs(d.z) <= precision) {
-		if (invalid)
-			*invalid = true;
-		return Vec();
-	}
-	else if (invalid)
-		*invalid = false;
-
-	/*
-	*	E: z = zPlane
-	*	Line: o + a * d
-	*	Solve for a and insert
-	*/
-	const float a = (zPlane - o.z) / d.z;
-	return o + d * a;
-}
-float Vec::Line::intersectXFactor(float xPlane, bool* invalid, float precision) const {
+float Vec::Line::intersectPlaneXf(float xPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.x) <= precision) {
 		if (invalid)
@@ -441,12 +438,15 @@ float Vec::Line::intersectXFactor(float xPlane, bool* invalid, float precision) 
 	/*
 	*	E: x = xPlane
 	*	Line: o + a * d
-	*	Solve for a and insert
+	*	insert into equation for x and solve for a
 	*/
-	const float a = (xPlane - o.x) / d.x;
-	return a;
+	return (xPlane - o.x) / d.x;
 }
-float Vec::Line::intersectYFactor(float yPlane, bool* invalid, float precision) const {
+Vec Vec::Line::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
+	const float a = intersectPlaneXf(xPlane, invalid, precision);
+	return o + d * a;
+}
+float Vec::Line::intersectPlaneYf(float yPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.y) <= precision) {
 		if (invalid)
@@ -459,12 +459,16 @@ float Vec::Line::intersectYFactor(float yPlane, bool* invalid, float precision) 
 	/*
 	*	E: y = yPlane
 	*	Line: o + a * d
-	*	Solve for a and insert
+	*	insert into equation for y and solve for a
 	*/
 	const float a = (yPlane - o.y) / d.y;
 	return a;
 }
-float Vec::Line::intersectZFactor(float zPlane, bool* invalid, float precision) const {
+Vec Vec::Line::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
+	const float a = intersectPlaneYf(yPlane, invalid, precision);
+	return o + d * a;
+}
+float Vec::Line::intersectPlaneZf(float zPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.z) <= precision) {
 		if (invalid)
@@ -477,88 +481,85 @@ float Vec::Line::intersectZFactor(float zPlane, bool* invalid, float precision) 
 	/*
 	*	E: z = zPlane
 	*	Line: o + a * d
-	*	Solve for a and insert
+	*	insert into equation for z and solve for a
 	*/
 	const float a = (zPlane - o.z) / d.z;
 	return a;
 }
-Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
-	/*
-	*	E: o + s * d
-	*	F: l.o + t * l.d
-	*
-	*	Solve for s and insert yields: s = l.d.y * (l.o.x - o.x) - l.d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
-	*								   t = d.y * (l.o.x - o.x) - d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
-	*	(same for x-z/y-z)
-	*/
+Vec Vec::Line::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
+	const float a = intersectPlaneZf(zPlane, invalid, precision);
+	return o + d * a;
+}
+Vec::Line::Linear Vec::Line::intersectXf(const Line& l, bool* invalid, float precision) const {
+	bool parallel = false;
 
-	/*
-	*	Select the axis to compute the combination for and compute the divisor.
-	*	Select the axis by computing the cross product between the two and then selecting the smallest two components of it.
-	*/
-	const size_t i = d.cross(l.d).comp(true);
-	const size_t _0 = (i + 1) % 3;
-	const size_t _1 = (i + 2) % 3;
-	const float divisor = d.c[_0] * l.d.c[_1] - d.c[_1] * l.d.c[_0];
+	/* compute the linear combination */
+	const Linear lin = fLinComb(l, Component::ComponentX, parallel, precision);
 
-	/* check if the two lines are parallel */
-	Vec pt;
-	bool on = false;
-	if (std::abs(divisor) <= precision) {
-		pt = o;
-		on = l.touch(pt, precision);
-	}
-
-	/* compute the points and check if they are equal */
-	else {
-		const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
-		const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
-		pt = o + d * s;
-		on = num::Cmp(pt.c[i], (l.o + l.d * t).c[i], precision);
-	}
-
-	/* return the point if it is on the line */
+	/* update the invalid flag and otherwise return the result */
 	if (invalid)
-		*invalid = !on;
-	return on ? pt : Vec();
+		*invalid = parallel;
+	return lin;
 }
-Vec::Line::Linear Vec::Line::intersectFactor(const Line& l, bool* invalid, float precision) const {
-	/*
-	*	E: o + s * d
-	*	F: l.o + t * l.d
-	*
-	*	Solve for s and insert yields: s = l.d.y * (l.o.x - o.x) - l.d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
-	*								   t = d.y * (l.o.x - o.x) - d.x * (l.o.y - o.y) / (d.x * l.d.y - d.y * l.d.x)
-	*	(same for x-z/y-z)
-	*/
+Vec Vec::Line::intersectX(const Line& l, bool* invalid, float precision) const {
+	const float s = intersectXf(l, invalid, precision).s;
+	return o + d * s;
+}
+Vec::Line::Linear Vec::Line::intersectYf(const Line& l, bool* invalid, float precision) const {
+	bool parallel = false;
 
-	/*
-	*	Select the axis to compute the combination for and compute the divisor.
-	*	Select the axis by computing the cross product between the two and then selecting the smallest two components of it.
-	*/
-	const size_t i = d.cross(l.d).comp(true);
-	const size_t _0 = (i + 1) % 3;
-	const size_t _1 = (i + 2) % 3;
-	const float divisor = d.c[_0] * l.d.c[_1] - d.c[_1] * l.d.c[_0];
+	/* compute the linear combination */
+	const Linear lin = fLinComb(l, Component::ComponentY, parallel, precision);
 
-	/* check if the two lines are parallel */
+	/* update the invalid flag and otherwise return the result */
+	if (invalid)
+		*invalid = parallel;
+	return lin;
+}
+Vec Vec::Line::intersectY(const Line& l, bool* invalid, float precision) const {
+	const float s = intersectYf(l, invalid, precision).s;
+	return o + d * s;
+}
+Vec::Line::Linear Vec::Line::intersectZf(const Line& l, bool* invalid, float precision) const {
+	bool parallel = false;
+
+	/* compute the linear combination */
+	const Linear lin = fLinComb(l, Component::ComponentZ, parallel, precision);
+
+	/* update the invalid flag and otherwise return the result */
+	if (invalid)
+		*invalid = parallel;
+	return lin;
+}
+Vec Vec::Line::intersectZ(const Line& l, bool* invalid, float precision) const {
+	const float s = intersectZf(l, invalid, precision).s;
+	return o + d * s;
+}
+Vec::Line::Linear Vec::Line::intersectf(const Line& l, bool* invalid, float precision) const {
+	/*
+	*	Select the axis to compute the combination for by computing the cross product between
+	*	the two and then selecting the smallest component which ensures that the other two components
+	*	are larger, as long as the lines are well defined
+	*/
+	const size_t index = d.cross(l.d).comp(false);
+	bool parallel = false;
+
+	/* compute the linear combination */
+	const Linear lin = fLinComb(l, index, parallel, precision);
+
+	/* check if the lines intersect */
 	bool on = false;
-	Linear lin;
-	if (std::abs(divisor) <= precision)
-		on = l.touch(o, precision);
+	if (!parallel)
+		on = num::Cmp(o.c[index] + d.c[index] * lin.s, l.o.c[index] + l.d.c[index] * lin.t, precision);
 
-	/* compute the points and check if they are equal */
-	else {
-		lin.s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
-		lin.t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
-		Vec pt = o + d * lin.s;
-		on = num::Cmp(pt.c[i], (l.o + l.d * lin.t).c[i], precision);
-	}
-
-	/* return the point if it is on the line */
+	/* update the invalid flag and return the result */
 	if (invalid)
 		*invalid = !on;
 	return on ? lin : Linear();
+}
+Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
+	const float f = intersectf(l, invalid, precision).s;
+	return o + d * f;
 }
 
 /* implement the plane object */
@@ -781,7 +782,7 @@ Vec Vec::Plane::steepestZ() const {
 	/* compute the vector of steepest ascent */
 	return a * a.z + t * t.z;
 }
-Vec::Line Vec::Plane::intersectX(float xPlane, bool* invalid, float precision) const {
+Vec::Line Vec::Plane::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger x component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -806,7 +807,7 @@ Vec::Line Vec::Plane::intersectX(float xPlane, bool* invalid, float precision) c
 		Vec(0.0f, _x1.y - (_x0.y * _x1.x / _x0.x), _x1.z - (_x0.z * _x1.x / _x0.x))
 	);
 }
-Vec::Line Vec::Plane::intersectY(float yPlane, bool* invalid, float precision) const {
+Vec::Line Vec::Plane::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger y component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -831,7 +832,7 @@ Vec::Line Vec::Plane::intersectY(float yPlane, bool* invalid, float precision) c
 		Vec(_x1.x - (_x0.x * _x1.y / _x0.y), 0.0f, _x1.z - (_x0.z * _x1.y / _x0.y))
 	);
 }
-Vec::Line Vec::Plane::intersectZ(float zPlane, bool* invalid, float precision) const {
+Vec::Line Vec::Plane::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger z component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -884,6 +885,32 @@ Vec::Line Vec::Plane::intersect(const Plane& p, bool* invalid, float precision) 
 		p.o + _x2 * (((o - p.o).dot(crs)) * dt),
 		_x3 - _x2 * (_x3.dot(crs) * dt)
 	);
+}
+Vec::Plane::Linear Vec::Plane::intersectf(const Line& l, bool* invalid, float precision) const {
+	const Vec crs = a.cross(b);
+
+	/* check if the line and the plane are parallel */
+	if (std::abs(crs.dot(l.d)) <= precision) {
+		if (invalid)
+			*invalid = true;
+		return Linear();
+	}
+	else if (invalid)
+		*invalid = false;
+
+	/*
+	*	E: o + s * a + t * b
+	*	G: l.o + f * l.d
+	*	Solve for f and insert
+	*
+	*	f = ((o - l.o) * (a x b)) / (l.d * (a x b))
+	*	s = ((o - l.o) * (l.d x b)) / (l.d * (a x b))
+	*	t = ((o - l.o) * (a x l.d)) / (l.d * (a x b))
+	*/
+	const float divisor = l.d.dot(crs);
+	const float s = (o - l.o).dot(l.d.cross(b)) / divisor;
+	const float t = (o - l.o).dot(a.cross(l.d)) / divisor;
+	return Linear(s, t);
 }
 Vec Vec::Plane::intersect(const Line& l, bool* invalid, float precision) const {
 	const Vec crs = a.cross(b);
