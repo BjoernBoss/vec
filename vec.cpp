@@ -49,6 +49,15 @@ bool num::Vec::operator==(const Vec& v) const {
 bool num::Vec::operator!=(const Vec& v) const {
 	return !equal(v);
 }
+num::Vec num::Vec::AxisX(float l) {
+	return Vec(l, 0.0f, 0.0f);
+}
+num::Vec num::Vec::AxisY(float l) {
+	return Vec(0.0f, l, 0.0f);
+}
+num::Vec num::Vec::AxisZ(float l) {
+	return Vec(0.0f, 0.0f, l);
+}
 float num::Vec::dot(const Vec& v) const {
 	return v.x * x + v.y * y + v.z * z;
 }
@@ -129,7 +138,7 @@ num::Vec num::Vec::rotateY(float a) const {
 		z * ca - x * sa);
 }
 num::Vec num::Vec::rotateZ(float a) const {
-	a = -num::ToRadian(a);
+	a = num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
 	return Vec(
@@ -137,29 +146,29 @@ num::Vec num::Vec::rotateZ(float a) const {
 		x * sa + y * ca,
 		z);
 }
-float num::Vec::angleX(const Vec& r) const {
-	Vec ref = r.planeX();
+float num::Vec::angleX(const Vec& v) const {
 	Vec flat = planeX();
+	Vec target = v.planeX();
 
 	/* compute the angle between the two vectors and correct its sign */
-	float angle = ref.angle(flat);
-	return (ref.crossX(flat) > 0.0f) ? -angle : angle;
+	float angle = flat.angle(target);
+	return (flat.crossX(target) < 0.0f) ? -angle : angle;
 }
-float num::Vec::angleY(const Vec& r) const {
-	Vec ref = r.planeY();
+float num::Vec::angleY(const Vec& v) const {
 	Vec flat = planeY();
+	Vec target = v.planeY();
 
 	/* compute the angle between the two vectors and correct its sign */
-	float angle = ref.angle(flat);
-	return (ref.crossY(flat) > 0.0f) ? -angle : angle;
+	float angle = flat.angle(target);
+	return (flat.crossY(target) < 0.0f) ? -angle : angle;
 }
-float num::Vec::angleZ(const Vec& r) const {
-	Vec ref = r.planeZ();
+float num::Vec::angleZ(const Vec& v) const {
 	Vec flat = planeZ();
+	Vec target = v.planeZ();
 
 	/* compute the angle between the two vectors and correct its sign */
-	float angle = ref.angle(flat);
-	return (ref.crossZ(flat) > 0.0f) ? -angle : angle;
+	float angle = flat.angle(target);
+	return (flat.crossZ(target) < 0.0f) ? -angle : angle;
 }
 num::Line num::Vec::line(const Vec& p) const {
 	return Line(*this, p - *this);
@@ -286,6 +295,15 @@ num::Line::Linear num::Line::fLinComb(const Line& l, size_t index, bool& paralle
 	const float s = (l.d.c[_1] * (l.o.c[_0] - o.c[_0]) - l.d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 	const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 	return Linear(s, t);
+}
+num::Line num::Line::AxisX(float l) {
+	return Line(Vec(), Vec::AxisX(l));
+}
+num::Line num::Line::AxisY(float l) {
+	return Line(Vec(), Vec::AxisY(l));
+}
+num::Line num::Line::AxisZ(float l) {
+	return Line(Vec(), Vec::AxisZ(l));
 }
 num::Line num::Line::planeX(float xPlane) const {
 	return Line(o.planeX(xPlane), d.planeX(xPlane));
@@ -563,6 +581,15 @@ num::Plane::Linear num::Plane::fLinComb(const Vec& p, size_t index) const {
 	const float _s = (_v0 * b.c[_1] - _v1 * b.c[_0]) / divisor;
 	const float _t = (a.c[_0] * _v1 - a.c[_1] * _v0) / divisor;
 	return Linear(_s, _t);
+}
+num::Plane num::Plane::AxisX(float d) {
+	return Plane(Vec::AxisX(d), Vec::AxisY(), Vec::AxisZ());
+}
+num::Plane num::Plane::AxisY(float d) {
+	return Plane(Vec::AxisY(d), Vec::AxisX(), Vec::AxisZ());
+}
+num::Plane num::Plane::AxisZ(float d) {
+	return Plane(Vec::AxisZ(d), Vec::AxisX(), Vec::AxisY());
 }
 num::Plane num::Plane::planeX(float xPlane) const {
 	return Plane(o.planeX(xPlane), a.planeX(xPlane), b.planeX(xPlane));

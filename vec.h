@@ -11,6 +11,7 @@ namespace num {
 	/*
 	*	- right-handed system
 	*	- counterclockwise rotations when the corresponding axis points towards the observer
+	*	- angles are calculated in degrees
 	*/
 	struct Line;
 	struct Plane;
@@ -18,19 +19,19 @@ namespace num {
 	/* define the vector object */
 	struct Vec {
 	public:
-		/* defines the component layout in memory (originated from the layout of the vectors in CoD: BO3 - Although LHS) */
+		/* defines the component layout in memory */
 		enum Component : uint8_t {
 			ComponentX = 0,
-			ComponentY = 2,
-			ComponentZ = 1
+			ComponentY = 1,
+			ComponentZ = 2,
 		};
 
 	public:
 		union {
 			struct {
 				float x;
-				float z;
 				float y;
+				float z;
 			};
 			float c[3];
 		};
@@ -52,21 +53,55 @@ namespace num {
 		bool operator!=(const Vec& v) const;
 
 	public:
-		float dot(const Vec& v) const;
-		float angle(const Vec& v) const;
-		float len() const;
-		float lenSquared() const;
-		Vec cross(const Vec& v) const;
-		float crossX(const Vec& v) const;
-		float crossY(const Vec& v) const;
-		float crossZ(const Vec& v) const;
-		Vec norm() const;
-		Vec planeX(float xPlane = 0.0f) const;
-		Vec planeY(float yPlane = 0.0f) const;
-		Vec planeZ(float zPlane = 0.0f) const;
-		size_t comp(bool largest) const;
+		/* create a vector on the x axis with the length [l] */
+		static Vec AxisX(float l = 1.0f);
+
+		/* create a vector on the y axis with the length [l] */
+		static Vec AxisY(float l = 1.0f);
+
+		/* create a vector on the z axis with the length [l] */
+		static Vec AxisZ(float l = 1.0f);
 
 	public:
+		/* compute the dot product [this] * [v] */
+		float dot(const Vec& v) const;
+
+		/* compute the angle between the vector [this] and [v] [0; 180] */
+		float angle(const Vec& v) const;
+
+		/* compute the length of the vector */
+		float len() const;
+
+		/* compute the squared length of the vector */
+		float lenSquared() const;
+
+		/* compute the the cross product [this] x [v] */
+		Vec cross(const Vec& v) const;
+
+		/* compute the x component of the cross product [this] x [v] */
+		float crossX(const Vec& v) const;
+
+		/* compute the y component of the cross product [this] x [v] */
+		float crossY(const Vec& v) const;
+
+		/* compute the z component of the cross product [this] x [v] */
+		float crossZ(const Vec& v) const;
+
+		/* compute the vector [this] normalized with the length 1 */
+		Vec norm() const;
+
+		/* compute the vector [this] projected onto the Y-Z plane */
+		Vec planeX(float xPlane = 0.0f) const;
+
+		/* compute the vector [this] projected onto the X-Z plane */
+		Vec planeY(float yPlane = 0.0f) const;
+
+		/* compute the vector [this] projected onto the X-Y plane */
+		Vec planeZ(float zPlane = 0.0f) const;
+
+		/* compute the index of the largest or smallest component of the vector */
+		size_t comp(bool largest) const;
+
 		/* compute the vector when rotating [this] by [a] degrees counterclockwise along the x axis when it points towards the observer */
 		Vec rotateX(float a) const;
 
@@ -76,14 +111,14 @@ namespace num {
 		/* compute the vector when rotating [this] by [a] degrees counterclockwise along the z axis when it points towards the observer */
 		Vec rotateZ(float a) const;
 
-		/* compute the angle to rotate [r] by on the x axis to match the vector [this] when projected onto the y/z plane [-180; 180] */
-		float angleX(const Vec& r) const;
+		/* compute the angle to rotate [this] by on the x axis to match the vector [v] when projected onto the y/z plane [-180; 180] */
+		float angleX(const Vec& v) const;
 
-		/* compute the angle to rotate [r] by on the y axis to match the vector [this] when projected onto the x/z plane [-180; 180] */
-		float angleY(const Vec& r) const;
+		/* compute the angle to rotate [this] by on the y axis to match the vector [v] when projected onto the x/z plane [-180; 180] */
+		float angleY(const Vec& v) const;
 
-		/* compute the angle to rotate [r] by on the z axis to match the vector [this] when projected onto the x/y plane [-180; 180] */
-		float angleZ(const Vec& r) const;
+		/* compute the angle to rotate [this] by on the z axis to match the vector [v] when projected onto the x/y plane [-180; 180] */
+		float angleZ(const Vec& v) const;
 
 		/* construct the line [this:(p-this)] */
 		Line line(const Vec& p) const;
@@ -165,12 +200,26 @@ namespace num {
 		Linear fLinComb(const Line& l, size_t index, bool& parallel, float precision) const;
 
 	public:
-		Line planeX(float xPlane = 0.0f) const;
-		Line planeY(float yPlane = 0.0f) const;
-		Line planeZ(float zPlane = 0.0f) const;
+		/* create a line along the x axis with the length [l] and its origin the the origin */
+		static Line AxisX(float l = 1.0f);
+
+		/* create a line along the y axis with the length [l] and its origin the the origin */
+		static Line AxisY(float l = 1.0f);
+
+		/* create a line along the z axis with the length [l] and its origin the the origin */
+		static Line AxisZ(float l = 1.0f);
 
 	public:
-		/* compute a point on [this] line */
+		/* compute the line [this] projected onto the Y-Z plane */
+		Line planeX(float xPlane = 0.0f) const;
+
+		/* compute the line [this] projected onto the X-Z plane */
+		Line planeY(float yPlane = 0.0f) const;
+
+		/* compute the line [this] projected onto the X-Y plane */
+		Line planeZ(float zPlane = 0.0f) const;
+
+		/* compute a point on line [this] */
 		Vec point(float t) const;
 
 		/* compute a normalized origin that is close to zero normalize the direction */
@@ -269,11 +318,25 @@ namespace num {
 		Linear fLinComb(const Vec& p, size_t index) const;
 
 	public:
-		Plane planeX(float xPlane = 0.0f) const;
-		Plane planeY(float yPlane = 0.0f) const;
-		Plane planeZ(float zPlane = 0.0f) const;
+		/* create a plane parallel to the Y-Z plane at distance [d] to the origin */
+		static Plane AxisX(float d = 0.0f);
+
+		/* create a plane parallel to the X-Z plane at distance [d] to the origin */
+		static Plane AxisY(float d = 1.0f);
+
+		/* create a plane parallel to the X-Y plane at distance [d] to the origin */
+		static Plane AxisZ(float d = 1.0f);
 
 	public:
+		/* compute the plane [this] projected onto the Y-Z plane */
+		Plane planeX(float xPlane = 0.0f) const;
+
+		/* compute the plane [this] projected onto the X-Z plane */
+		Plane planeY(float yPlane = 0.0f) const;
+
+		/* compute the plane [this] projected onto the X-Y plane */
+		Plane planeZ(float zPlane = 0.0f) const;
+
 		/* compute the normal vector of the plane */
 		Vec normal() const;
 
