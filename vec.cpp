@@ -1,58 +1,58 @@
-#include "vector-base.h"
+#include "vec.h"
 
 /* implement the vector object */
-Vec::Vec() : x(0.0f), y(0.0f), z(0.0f) {}
-Vec::Vec(float f) : x(f), y(f), z(f) {}
-Vec::Vec(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
-Vec Vec::operator+(const Vec& v) const {
+num::Vec::Vec() : x(0.0f), y(0.0f), z(0.0f) {}
+num::Vec::Vec(float f) : x(f), y(f), z(f) {}
+num::Vec::Vec(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+num::Vec num::Vec::operator+(const Vec& v) const {
 	return Vec(x + v.x, y + v.y, z + v.z);
 }
-Vec Vec::operator-(const Vec& v) const {
+num::Vec num::Vec::operator-(const Vec& v) const {
 	return Vec(x - v.x, y - v.y, z - v.z);
 }
-Vec Vec::operator-() const {
+num::Vec num::Vec::operator-() const {
 	return Vec(-x, -y, -z);
 }
-Vec Vec::operator*(float s) const {
+num::Vec num::Vec::operator*(float s) const {
 	return Vec(x * s, y * s, z * s);
 }
-Vec Vec::operator/(float s) const {
+num::Vec num::Vec::operator/(float s) const {
 	return Vec(x / s, y / s, z / s);
 }
-Vec& Vec::operator+=(const Vec& v) {
+num::Vec& num::Vec::operator+=(const Vec& v) {
 	x += v.x;
 	y += v.y;
 	z += v.z;
 	return *this;
 }
-Vec& Vec::operator-=(const Vec& v) {
+num::Vec& num::Vec::operator-=(const Vec& v) {
 	x -= v.x;
 	y -= v.y;
 	z -= v.z;
 	return *this;
 }
-Vec& Vec::operator*=(float s) {
+num::Vec& num::Vec::operator*=(float s) {
 	x *= s;
 	y *= s;
 	z *= s;
 	return *this;
 }
-Vec& Vec::operator/=(float s) {
+num::Vec& num::Vec::operator/=(float s) {
 	x /= s;
 	y /= s;
 	z /= s;
 	return *this;
 }
-bool Vec::operator==(const Vec& v) const {
+bool num::Vec::operator==(const Vec& v) const {
 	return equal(v);
 }
-bool Vec::operator!=(const Vec& v) const {
+bool num::Vec::operator!=(const Vec& v) const {
 	return !equal(v);
 }
-float Vec::dot(const Vec& v) const {
+float num::Vec::dot(const Vec& v) const {
 	return v.x * x + v.y * y + v.z * z;
 }
-float Vec::angle(const Vec& v) const {
+float num::Vec::angle(const Vec& v) const {
 	float dotProd = dot(v);
 	float lenProd = std::sqrt(lenSquared() * v.lenSquared());
 	float frac = dotProd / lenProd;
@@ -65,41 +65,41 @@ float Vec::angle(const Vec& v) const {
 		return 180.0f;
 	return num::ToDegree(std::acos(frac));
 }
-float Vec::len() const {
+float num::Vec::len() const {
 	return std::sqrt(x * x + y * y + z * z);
 }
-float Vec::lenSquared() const {
+float num::Vec::lenSquared() const {
 	return x * x + y * y + z * z;
 }
-Vec Vec::cross(const Vec& v) const {
+num::Vec num::Vec::cross(const Vec& v) const {
 	return Vec(
 		y * v.z - z * v.y,
 		z * v.x - x * v.z,
 		x * v.y - y * v.x);
 }
-float Vec::crossX(const Vec& v) const {
+float num::Vec::crossX(const Vec& v) const {
 	return y * v.z - z * v.y;
 }
-float Vec::crossY(const Vec& v) const {
+float num::Vec::crossY(const Vec& v) const {
 	return z * v.x - x * v.z;
 }
-float Vec::crossZ(const Vec& v) const {
+float num::Vec::crossZ(const Vec& v) const {
 	return x * v.y - y * v.x;
 }
-Vec Vec::norm() const {
+num::Vec num::Vec::norm() const {
 	float l = len();
 	return Vec(x / l, y / l, z / l);
 }
-Vec Vec::planeX(float xPlane) const {
+num::Vec num::Vec::planeX(float xPlane) const {
 	return Vec(xPlane, y, z);
 }
-Vec Vec::planeY(float yPlane) const {
+num::Vec num::Vec::planeY(float yPlane) const {
 	return Vec(x, yPlane, z);
 }
-Vec Vec::planeZ(float zPlane) const {
+num::Vec num::Vec::planeZ(float zPlane) const {
 	return Vec(x, y, zPlane);
 }
-size_t Vec::comp(bool largest) const {
+size_t num::Vec::comp(bool largest) const {
 	size_t index = 0;
 
 	/* iterate through the components and check if one is larger */
@@ -110,7 +110,7 @@ size_t Vec::comp(bool largest) const {
 	}
 	return index;
 }
-Vec Vec::rotateX(float a) const {
+num::Vec num::Vec::rotateX(float a) const {
 	a = num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
@@ -119,7 +119,7 @@ Vec Vec::rotateX(float a) const {
 		y * ca - z * sa,
 		y * sa + z * ca);
 }
-Vec Vec::rotateY(float a) const {
+num::Vec num::Vec::rotateY(float a) const {
 	a = num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
@@ -128,7 +128,7 @@ Vec Vec::rotateY(float a) const {
 		y,
 		z * ca - x * sa);
 }
-Vec Vec::rotateZ(float a) const {
+num::Vec num::Vec::rotateZ(float a) const {
 	a = -num::ToRadian(a);
 	const float sa = std::sin(a);
 	const float ca = std::cos(a);
@@ -137,7 +137,7 @@ Vec Vec::rotateZ(float a) const {
 		x * sa + y * ca,
 		z);
 }
-float Vec::angleX(const Vec& r) const {
+float num::Vec::angleX(const Vec& r) const {
 	Vec ref = r.planeX();
 	Vec flat = planeX();
 
@@ -145,7 +145,7 @@ float Vec::angleX(const Vec& r) const {
 	float angle = ref.angle(flat);
 	return (ref.crossX(flat) > 0.0f) ? -angle : angle;
 }
-float Vec::angleY(const Vec& r) const {
+float num::Vec::angleY(const Vec& r) const {
 	Vec ref = r.planeY();
 	Vec flat = planeY();
 
@@ -153,7 +153,7 @@ float Vec::angleY(const Vec& r) const {
 	float angle = ref.angle(flat);
 	return (ref.crossY(flat) > 0.0f) ? -angle : angle;
 }
-float Vec::angleZ(const Vec& r) const {
+float num::Vec::angleZ(const Vec& r) const {
 	Vec ref = r.planeZ();
 	Vec flat = planeZ();
 
@@ -161,32 +161,32 @@ float Vec::angleZ(const Vec& r) const {
 	float angle = ref.angle(flat);
 	return (ref.crossZ(flat) > 0.0f) ? -angle : angle;
 }
-Vec::Line Vec::line(const Vec& p) const {
+num::Line num::Vec::line(const Vec& p) const {
 	return Line(*this, p - *this);
 }
-Vec::Plane Vec::plane(const Vec& p0, const Vec& p1) const {
+num::Plane num::Vec::plane(const Vec& p0, const Vec& p1) const {
 	return Plane(*this, p0 - *this, p1 - *this);
 }
-Vec Vec::interpolate(const Vec& p, float t) const {
+num::Vec num::Vec::interpolate(const Vec& p, float t) const {
 	return Vec(
 		x + (p.x - x) * t,
 		y + (p.y - y) * t,
 		z + (p.z - z) * t
 	);
 }
-Vec Vec::rescale(float l) const {
+num::Vec num::Vec::rescale(float l) const {
 	float factor = std::sqrt((l * l) / lenSquared());
 	return *this * factor;
 }
-float Vec::delta(const Vec& v) const {
+float num::Vec::delta(const Vec& v) const {
 	/* extract the largest component and use it to compute the scaling factor */
 	size_t index = comp(true);
 	return v.c[index] / c[index];
 }
-Vec Vec::scale(float f) const {
+num::Vec num::Vec::scale(float f) const {
 	return Vec(x * f, y * f, z * f);
 }
-bool Vec::parallel(const Vec& v, float precision) const {
+bool num::Vec::parallel(const Vec& v, float precision) const {
 	/* extract the largest components and check if the vectors are considered zero */
 	const size_t largest[2] = { comp(true), v.comp(true) };
 	if (std::abs(c[largest[0]]) <= precision)
@@ -200,7 +200,7 @@ bool Vec::parallel(const Vec& v, float precision) const {
 	/* check if the vectors are equal when scaled */
 	return equal(v * f, precision);
 }
-bool Vec::sign(const Vec& v, float precision) const {
+bool num::Vec::sign(const Vec& v, float precision) const {
 	/* extract the largest components and check if the vectors are considered zero */
 	const size_t largest[2] = { comp(true), v.comp(true) };
 	if (std::abs(c[largest[0]]) <= precision)
@@ -216,27 +216,27 @@ bool Vec::sign(const Vec& v, float precision) const {
 	/* check if the vectors are equal when scaled */
 	return equal(v * f, precision);
 }
-bool Vec::match(const Vec& v, float precision) const {
+bool num::Vec::match(const Vec& v, float precision) const {
 	return num::Cmp(dot(v), lenSquared(), precision);
 }
-bool Vec::equal(const Vec& v, float precision) const {
+bool num::Vec::equal(const Vec& v, float precision) const {
 	/* dont subtract and then compare with zero as small errors will have a much larger effect on
 	*	the result due to the canceling effects of subtraction on the information */
 	return num::Cmp(x, v.x, precision) && num::Cmp(y, v.y, precision) && num::Cmp(z, v.z, precision);
 }
-bool Vec::zeroX(float precision) const {
+bool num::Vec::zeroX(float precision) const {
 	return num::Zero(x, precision);
 }
-bool Vec::zeroY(float precision) const {
+bool num::Vec::zeroY(float precision) const {
 	return num::Zero(y, precision);
 }
-bool Vec::zeroZ(float precision) const {
+bool num::Vec::zeroZ(float precision) const {
 	return num::Zero(z, precision);
 }
-bool Vec::zero(float precision) const {
+bool num::Vec::zero(float precision) const {
 	return num::Zero(lenSquared(), precision);
 }
-Vec Vec::perpendicular(const Vec& v) const {
+num::Vec num::Vec::perpendicular(const Vec& v) const {
 	/*
 	*	(v - [this] * a) * [this] = 0
 	*	Solve for a and insert
@@ -244,26 +244,26 @@ Vec Vec::perpendicular(const Vec& v) const {
 	const float a = dot(v) / dot(*this);
 	return v - *this * a;
 }
-Vec Vec::project(const Vec& v) const {
+num::Vec num::Vec::project(const Vec& v) const {
 	float factor = dot(v) / lenSquared();
 	return *this * factor;
 }
-float Vec::projectf(const Vec& v) const {
+float num::Vec::projectf(const Vec& v) const {
 	return dot(v) / lenSquared();
 }
 
 /* implement the vector multiplication from the right */
-Vec operator*(float s, const Vec& v) {
+num::Vec num::operator*(float s, const Vec& v) {
 	return v * s;
 }
 
 /* implement the line object */
-Vec::Line::Linear::Linear() : s(0.0f), t(0.0f) {}
-Vec::Line::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
-Vec::Line::Line() {}
-Vec::Line::Line(const Vec& _d) : d(_d) {}
-Vec::Line::Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
-Vec::Line::Linear Vec::Line::fLinComb(const Line& l, size_t index, bool& parallel, float precision) const {
+num::Line::Linear::Linear() : s(0.0f), t(0.0f) {}
+num::Line::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
+num::Line::Line() {}
+num::Line::Line(const Vec& _d) : d(_d) {}
+num::Line::Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
+num::Line::Linear num::Line::fLinComb(const Line& l, size_t index, bool& parallel, float precision) const {
 	/*
 	*	E: o + s * d
 	*	F: l.o + t * l.d
@@ -287,19 +287,19 @@ Vec::Line::Linear Vec::Line::fLinComb(const Line& l, size_t index, bool& paralle
 	const float t = (d.c[_1] * (l.o.c[_0] - o.c[_0]) - d.c[_0] * (l.o.c[_1] - o.c[_1])) / divisor;
 	return Linear(s, t);
 }
-Vec::Line Vec::Line::planeX(float xPlane) const {
+num::Line num::Line::planeX(float xPlane) const {
 	return Line(o.planeX(xPlane), d.planeX(xPlane));
 }
-Vec::Line Vec::Line::planeY(float yPlane) const {
+num::Line num::Line::planeY(float yPlane) const {
 	return Line(o.planeY(yPlane), d.planeY(yPlane));
 }
-Vec::Line Vec::Line::planeZ(float zPlane) const {
+num::Line num::Line::planeZ(float zPlane) const {
 	return Line(o.planeZ(zPlane), d.planeZ(zPlane));
 }
-Vec Vec::Line::point(float t) const {
+num::Vec num::Line::point(float t) const {
 	return o + d * t;
 }
-Vec::Line Vec::Line::norm() const {
+num::Line num::Line::norm() const {
 	/*
 	*	o - a * d = NewOrigin
 	*	-> (o - a * d) * d = 0 (the line and NewOrigin should be perpendicular)
@@ -308,7 +308,7 @@ Vec::Line Vec::Line::norm() const {
 	const float a = o.dot(d) / d.dot(d);
 	return Line(o - d * a, d.norm());
 }
-bool Vec::Line::touch(const Vec& p, float precision) const {
+bool num::Line::touch(const Vec& p, float precision) const {
 	/*
 	*	E: o + s * d
 	*	Set equal to [p] and solve for s and insert
@@ -324,18 +324,18 @@ bool Vec::Line::touch(const Vec& p, float precision) const {
 	/* ensure that the points are equal */
 	return p.equal(t, precision);
 }
-float Vec::Line::find(const Vec& p) const {
+float num::Line::find(const Vec& p) const {
 	/* extract the largest component of the direction and use it to compute the scaling factor */
 	size_t index = d.comp(true);
 	return (p.c[index] - o.c[index]) / d.c[index];
 }
-bool Vec::Line::equal(const Line& l, float precision) const {
+bool num::Line::equal(const Line& l, float precision) const {
 	return l.touch(o, precision) && l.d.parallel(d, precision);
 }
-bool Vec::Line::identical(const Line& l, float precision) const {
+bool num::Line::identical(const Line& l, float precision) const {
 	return l.o.equal(o, precision) && l.d.equal(d, precision);
 }
-float Vec::Line::closestf(const Vec& p) const {
+float num::Line::closestf(const Vec& p) const {
 	/*
 	*	o + a * d = p + v
 	*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
@@ -343,11 +343,11 @@ float Vec::Line::closestf(const Vec& p) const {
 	*/
 	return (p - o).dot(d) / d.dot(d);
 }
-Vec Vec::Line::closest(const Vec& p) const {
+num::Vec num::Line::closest(const Vec& p) const {
 	const float a = closestf(p);
 	return o + d * a - p;
 }
-Vec::Line::Linear Vec::Line::closestf(const Line& l) const {
+num::Line::Linear num::Line::closestf(const Line& l) const {
 	/*
 	*	E: o + s * d
 	*	F: l.o + t * l.d
@@ -375,7 +375,7 @@ Vec::Line::Linear Vec::Line::closestf(const Line& l) const {
 	/* return the two factors */
 	return Linear(s, t);
 }
-Vec::Line Vec::Line::closest(const Line& l) const {
+num::Line num::Line::closest(const Line& l) const {
 	/*
 	*	E: o + s * d
 	*	F: l.o + t * l.d
@@ -403,7 +403,7 @@ Vec::Line Vec::Line::closest(const Line& l) const {
 	/* return the final line */
 	return Line(o + d * s, v * r);
 }
-float Vec::Line::intersectPlaneXf(float xPlane, bool* invalid, float precision) const {
+float num::Line::intersectPlaneXf(float xPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.x) <= precision) {
 		if (invalid)
@@ -420,11 +420,11 @@ float Vec::Line::intersectPlaneXf(float xPlane, bool* invalid, float precision) 
 	*/
 	return (xPlane - o.x) / d.x;
 }
-Vec Vec::Line::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
+num::Vec num::Line::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
 	const float a = intersectPlaneXf(xPlane, invalid, precision);
 	return o + d * a;
 }
-float Vec::Line::intersectPlaneYf(float yPlane, bool* invalid, float precision) const {
+float num::Line::intersectPlaneYf(float yPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.y) <= precision) {
 		if (invalid)
@@ -442,11 +442,11 @@ float Vec::Line::intersectPlaneYf(float yPlane, bool* invalid, float precision) 
 	const float a = (yPlane - o.y) / d.y;
 	return a;
 }
-Vec Vec::Line::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
+num::Vec num::Line::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
 	const float a = intersectPlaneYf(yPlane, invalid, precision);
 	return o + d * a;
 }
-float Vec::Line::intersectPlaneZf(float zPlane, bool* invalid, float precision) const {
+float num::Line::intersectPlaneZf(float zPlane, bool* invalid, float precision) const {
 	/* check if the line and the plane are parallel */
 	if (std::abs(d.z) <= precision) {
 		if (invalid)
@@ -464,56 +464,56 @@ float Vec::Line::intersectPlaneZf(float zPlane, bool* invalid, float precision) 
 	const float a = (zPlane - o.z) / d.z;
 	return a;
 }
-Vec Vec::Line::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
+num::Vec num::Line::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
 	const float a = intersectPlaneZf(zPlane, invalid, precision);
 	return o + d * a;
 }
-Vec::Line::Linear Vec::Line::intersectXf(const Line& l, bool* invalid, float precision) const {
+num::Line::Linear num::Line::intersectXf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
-	const Linear lin = fLinComb(l, Component::ComponentX, parallel, precision);
+	const Linear lin = fLinComb(l, Vec::Component::ComponentX, parallel, precision);
 
 	/* update the invalid flag and otherwise return the result */
 	if (invalid)
 		*invalid = parallel;
 	return lin;
 }
-Vec Vec::Line::intersectX(const Line& l, bool* invalid, float precision) const {
+num::Vec num::Line::intersectX(const Line& l, bool* invalid, float precision) const {
 	const float s = intersectXf(l, invalid, precision).s;
 	return o + d * s;
 }
-Vec::Line::Linear Vec::Line::intersectYf(const Line& l, bool* invalid, float precision) const {
+num::Line::Linear num::Line::intersectYf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
-	const Linear lin = fLinComb(l, Component::ComponentY, parallel, precision);
+	const Linear lin = fLinComb(l, Vec::Component::ComponentY, parallel, precision);
 
 	/* update the invalid flag and otherwise return the result */
 	if (invalid)
 		*invalid = parallel;
 	return lin;
 }
-Vec Vec::Line::intersectY(const Line& l, bool* invalid, float precision) const {
+num::Vec num::Line::intersectY(const Line& l, bool* invalid, float precision) const {
 	const float s = intersectYf(l, invalid, precision).s;
 	return o + d * s;
 }
-Vec::Line::Linear Vec::Line::intersectZf(const Line& l, bool* invalid, float precision) const {
+num::Line::Linear num::Line::intersectZf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
-	const Linear lin = fLinComb(l, Component::ComponentZ, parallel, precision);
+	const Linear lin = fLinComb(l, Vec::Component::ComponentZ, parallel, precision);
 
 	/* update the invalid flag and otherwise return the result */
 	if (invalid)
 		*invalid = parallel;
 	return lin;
 }
-Vec Vec::Line::intersectZ(const Line& l, bool* invalid, float precision) const {
+num::Vec num::Line::intersectZ(const Line& l, bool* invalid, float precision) const {
 	const float s = intersectZf(l, invalid, precision).s;
 	return o + d * s;
 }
-Vec::Line::Linear Vec::Line::intersectf(const Line& l, bool* invalid, float precision) const {
+num::Line::Linear num::Line::intersectf(const Line& l, bool* invalid, float precision) const {
 	/*
 	*	Select the axis to compute the combination for by computing the cross product between
 	*	the two and then selecting the smallest component which ensures that the other two components
@@ -535,18 +535,18 @@ Vec::Line::Linear Vec::Line::intersectf(const Line& l, bool* invalid, float prec
 		*invalid = !on;
 	return on ? lin : Linear();
 }
-Vec Vec::Line::intersect(const Line& l, bool* invalid, float precision) const {
+num::Vec num::Line::intersect(const Line& l, bool* invalid, float precision) const {
 	const float f = intersectf(l, invalid, precision).s;
 	return o + d * f;
 }
 
 /* implement the plane object */
-Vec::Plane::Linear::Linear() : s(0.0f), t(0.0f) {}
-Vec::Plane::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
-Vec::Plane::Plane() {}
-Vec::Plane::Plane(const Vec& _a, const Vec& _b) : a(_a), b(_b) {}
-Vec::Plane::Plane(const Vec& _o, const Vec& _a, const Vec& _b) : o(_o), a(_a), b(_b) {}
-Vec::Plane::Linear Vec::Plane::fLinComb(const Vec& p, size_t index) const {
+num::Plane::Linear::Linear() : s(0.0f), t(0.0f) {}
+num::Plane::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
+num::Plane::Plane() {}
+num::Plane::Plane(const Vec& _a, const Vec& _b) : a(_a), b(_b) {}
+num::Plane::Plane(const Vec& _o, const Vec& _a, const Vec& _b) : o(_o), a(_a), b(_b) {}
+num::Plane::Linear num::Plane::fLinComb(const Vec& p, size_t index) const {
 	/*
 	*	compute the linar combination that results in the point [p] while ignoring the component passed in as index (here in X-Y plane)
 	*	p = o + s * a + t * b
@@ -564,28 +564,28 @@ Vec::Plane::Linear Vec::Plane::fLinComb(const Vec& p, size_t index) const {
 	const float _t = (a.c[_0] * _v1 - a.c[_1] * _v0) / divisor;
 	return Linear(_s, _t);
 }
-Vec::Plane Vec::Plane::planeX(float xPlane) const {
+num::Plane num::Plane::planeX(float xPlane) const {
 	return Plane(o.planeX(xPlane), a.planeX(xPlane), b.planeX(xPlane));
 }
-Vec::Plane Vec::Plane::planeY(float yPlane) const {
+num::Plane num::Plane::planeY(float yPlane) const {
 	return Plane(o.planeY(yPlane), a.planeY(yPlane), b.planeY(yPlane));
 }
-Vec::Plane Vec::Plane::planeZ(float zPlane) const {
+num::Plane num::Plane::planeZ(float zPlane) const {
 	return Plane(o.planeZ(zPlane), a.planeZ(zPlane), b.planeZ(zPlane));
 }
-Vec Vec::Plane::normal() const {
+num::Vec num::Plane::normal() const {
 	return a.cross(b);
 }
-Vec Vec::Plane::center() const {
+num::Vec num::Plane::center() const {
 	return o + ((a + b) / 3);
 }
-Vec Vec::Plane::point(float s, float t) const {
+num::Vec num::Plane::point(float s, float t) const {
 	return o + a * s + b * t;
 }
-Vec Vec::Plane::point(const Linear& lin) const {
+num::Vec num::Plane::point(const Linear& lin) const {
 	return o + a * lin.s + b * lin.t;
 }
-Vec::Plane Vec::Plane::norm() const {
+num::Plane num::Plane::norm() const {
 	/*
 	*	compute this by computing the intersection point of a line with the
 	*	planes normal vector as direction vector and the zero-vector as its origin
@@ -601,19 +601,19 @@ Vec::Plane Vec::Plane::norm() const {
 	const Vec _a = a.norm();
 	return Plane(crs * f, _a, _a.perpendicular(b).norm());
 }
-Vec Vec::Plane::projectX(const Vec& p) const {
-	const Linear r = fLinComb(p, Component::ComponentX);
+num::Vec num::Plane::projectX(const Vec& p) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentX);
 	return Vec(o.x + r.s * a.x + r.t * b.x, p.y, p.z);
 }
-Vec Vec::Plane::projectY(const Vec& p) const {
-	const Linear r = fLinComb(p, Component::ComponentY);
+num::Vec num::Plane::projectY(const Vec& p) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentY);
 	return Vec(p.x, o.y + r.s * a.y + r.t * b.y, p.z);
 }
-Vec Vec::Plane::projectZ(const Vec& p) const {
-	const Linear r = fLinComb(p, Component::ComponentZ);
+num::Vec num::Plane::projectZ(const Vec& p) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentZ);
 	return Vec(p.x, p.y, o.z + r.s * a.z + r.t * b.z);
 }
-Vec Vec::Plane::project(const Vec& v) const {
+num::Vec num::Plane::project(const Vec& v) const {
 	/*
 	*	compute the projection onto the normal of the plane and subtract it from p
 	*	as this will result in only the part on the vector within the plane
@@ -621,19 +621,19 @@ Vec Vec::Plane::project(const Vec& v) const {
 	const Vec crs = a.cross(b);
 	return v - crs.project(v);
 }
-bool Vec::Plane::inTriangleX(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentX);
+bool num::Plane::inTriangleX(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentX);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-bool Vec::Plane::inTriangleY(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentY);
+bool num::Plane::inTriangleY(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentY);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-bool Vec::Plane::inTriangleZ(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentZ);
+bool num::Plane::inTriangleZ(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentZ);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-bool Vec::Plane::inTriangle(const Vec& p, bool* touching, float precision) const {
+bool num::Plane::inTriangle(const Vec& p, bool* touching, float precision) const {
 	/*
 	*	find the smallest component of the cross product which ensures that
 	*	the other two components are larger, as long as the plane is well defined
@@ -648,19 +648,19 @@ bool Vec::Plane::inTriangle(const Vec& p, bool* touching, float precision) const
 		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
 	return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 }
-bool Vec::Plane::inConeX(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentX);
+bool num::Plane::inConeX(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentX);
 	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
-bool Vec::Plane::inConeY(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentY);
+bool num::Plane::inConeY(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentY);
 	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
-bool Vec::Plane::inConeZ(const Vec& p, float precision) const {
-	const Linear r = fLinComb(p, Component::ComponentZ);
+bool num::Plane::inConeZ(const Vec& p, float precision) const {
+	const Linear r = fLinComb(p, Vec::Component::ComponentZ);
 	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
-bool Vec::Plane::inCone(const Vec& p, bool* touching, float precision) const {
+bool num::Plane::inCone(const Vec& p, bool* touching, float precision) const {
 	/*
 	*	find the smallest component of the cross product which ensures that
 	*	the other two components are larger, as long as the plane is well defined
@@ -675,7 +675,7 @@ bool Vec::Plane::inCone(const Vec& p, bool* touching, float precision) const {
 		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
 	return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 }
-bool Vec::Plane::touch(const Vec& p, float precision) const {
+bool num::Plane::touch(const Vec& p, float precision) const {
 	/*
 	*	find the smallest component of the cross product which ensures that
 	*	the other two components are larger, as long as the plane is well defined
@@ -691,13 +691,13 @@ bool Vec::Plane::touch(const Vec& p, float precision) const {
 	/* compare the point on the plane with the given point */
 	return p.equal(t, precision);
 }
-bool Vec::Plane::equal(const Plane& p, float precision) const {
+bool num::Plane::equal(const Plane& p, float precision) const {
 	return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
 }
-bool Vec::Plane::identical(const Plane& p, float precision) const {
+bool num::Plane::identical(const Plane& p, float precision) const {
 	return p.o.equal(o, precision) && p.a.equal(a, precision) && p.b.equal(b, precision);
 }
-Vec Vec::Plane::closest(const Vec& p) const {
+num::Vec num::Plane::closest(const Vec& p) const {
 	/*
 	*	compute this by computing the intersection point of a line with the
 	*	planes normal vector as direction vector and the point as origin
@@ -712,7 +712,7 @@ Vec Vec::Plane::closest(const Vec& p) const {
 	const float f = (o - p).dot(crs) / crs.dot(crs);
 	return crs * f;
 }
-Vec Vec::Plane::steepestX() const {
+num::Vec num::Plane::steepestX() const {
 	/*
 	*	If a and b are perpendicular to each other and have the same length,
 	*	the vector of steepest ascent can be computed as follows:
@@ -728,7 +728,7 @@ Vec Vec::Plane::steepestX() const {
 	/* compute the vector of steepest ascent */
 	return a * a.x + t * t.x;
 }
-Vec Vec::Plane::steepestY() const {
+num::Vec num::Plane::steepestY() const {
 	/*
 	*	If a and b are perpendicular to each other and have the same length,
 	*	the vector of steepest ascent can be computed as follows:
@@ -744,7 +744,7 @@ Vec Vec::Plane::steepestY() const {
 	/* compute the vector of steepest ascent */
 	return a * a.y + t * t.y;
 }
-Vec Vec::Plane::steepestZ() const {
+num::Vec num::Plane::steepestZ() const {
 	/*
 	*	If a and b are perpendicular to each other and have the same length,
 	*	the vector of steepest ascent can be computed as follows:
@@ -760,7 +760,7 @@ Vec Vec::Plane::steepestZ() const {
 	/* compute the vector of steepest ascent */
 	return a * a.z + t * t.z;
 }
-Vec::Line Vec::Plane::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
+num::Line num::Plane::intersectPlaneX(float xPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger x component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -785,7 +785,7 @@ Vec::Line Vec::Plane::intersectPlaneX(float xPlane, bool* invalid, float precisi
 		Vec(0.0f, _x1.y - (_x0.y * _x1.x / _x0.x), _x1.z - (_x0.z * _x1.x / _x0.x))
 	);
 }
-Vec::Line Vec::Plane::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
+num::Line num::Plane::intersectPlaneY(float yPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger y component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -810,7 +810,7 @@ Vec::Line Vec::Plane::intersectPlaneY(float yPlane, bool* invalid, float precisi
 		Vec(_x1.x - (_x0.x * _x1.y / _x0.y), 0.0f, _x1.z - (_x0.z * _x1.y / _x0.y))
 	);
 }
-Vec::Line Vec::Plane::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
+num::Line num::Plane::intersectPlaneZ(float zPlane, bool* invalid, float precision) const {
 	/*
 	*	order the extent-vectors in order to have the one with the larger z component
 	*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
@@ -835,7 +835,7 @@ Vec::Line Vec::Plane::intersectPlaneZ(float zPlane, bool* invalid, float precisi
 		Vec(_x1.x - (_x0.x * _x1.z / _x0.z), _x1.y - (_x0.y * _x1.z / _x0.z), 0.0f)
 	);
 }
-Vec::Line Vec::Plane::intersect(const Plane& p, bool* invalid, float precision) const {
+num::Line num::Plane::intersect(const Plane& p, bool* invalid, float precision) const {
 	const Vec crs = a.cross(b);
 
 	/* select the extent-vector which is less parallel to the plane and check if the planes are parallel */
@@ -864,7 +864,7 @@ Vec::Line Vec::Plane::intersect(const Plane& p, bool* invalid, float precision) 
 		_x3 - _x2 * (_x3.dot(crs) * dt)
 	);
 }
-Vec::Plane::Linear Vec::Plane::intersectf(const Line& l, bool* invalid, float precision) const {
+num::Plane::Linear num::Plane::intersectf(const Line& l, bool* invalid, float precision) const {
 	const Vec crs = a.cross(b);
 
 	/* check if the line and the plane are parallel */
@@ -890,7 +890,7 @@ Vec::Plane::Linear Vec::Plane::intersectf(const Line& l, bool* invalid, float pr
 	const float t = (o - l.o).dot(a.cross(l.d)) / divisor;
 	return Linear(s, t);
 }
-Vec Vec::Plane::intersect(const Line& l, bool* invalid, float precision) const {
+num::Vec num::Plane::intersect(const Line& l, bool* invalid, float precision) const {
 	const Vec crs = a.cross(b);
 
 	/* check if the line and the plane are parallel */
@@ -914,16 +914,16 @@ Vec Vec::Plane::intersect(const Line& l, bool* invalid, float precision) const {
 	const float a = (o - l.o).dot(crs) / l.d.dot(crs);
 	return l.o + l.d * a;
 }
-Vec::Plane::Linear Vec::Plane::linearX(const Vec& p) const {
-	return fLinComb(p, Component::ComponentX);
+num::Plane::Linear num::Plane::linearX(const Vec& p) const {
+	return fLinComb(p, Vec::Component::ComponentX);
 }
-Vec::Plane::Linear Vec::Plane::linearY(const Vec& p) const {
-	return fLinComb(p, Component::ComponentY);
+num::Plane::Linear num::Plane::linearY(const Vec& p) const {
+	return fLinComb(p, Vec::Component::ComponentY);
 }
-Vec::Plane::Linear Vec::Plane::linearZ(const Vec& p) const {
-	return fLinComb(p, Component::ComponentZ);
+num::Plane::Linear num::Plane::linearZ(const Vec& p) const {
+	return fLinComb(p, Vec::Component::ComponentZ);
 }
-Vec::Plane::Linear Vec::Plane::linear(const Vec& p, bool* touching, float precision) const {
+num::Plane::Linear num::Plane::linear(const Vec& p, bool* touching, float precision) const {
 	/*
 	*	find the smallest component of the cross product which ensures that
 	*	the other two components are larger, as long as the plane is well defined
