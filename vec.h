@@ -7,6 +7,9 @@
 
 #include "float-base.h"
 
+#include <istream>
+#include <ostream>
+
 namespace num {
 	/*
 	*	- right-handed system
@@ -15,6 +18,16 @@ namespace num {
 	*/
 	struct Line;
 	struct Plane;
+
+	/* define the linear helper object */
+	struct Linear {
+		float s;
+		float t;
+
+	public:
+		Linear();
+		Linear(float s, float t);
+	};
 
 	/* define the vector object */
 	struct Vec {
@@ -162,33 +175,44 @@ namespace num {
 		/* check if the vector is negligible */
 		bool zero(float precision = num::Precision) const;
 
-		/* compute a vector which is a linear combination of [this] and [v] but is perpendicular to [this] */
-		Vec perpendicular(const Vec& v) const;
+		/* check if [this] and [v] are perpendicular to each other */
+		bool isPerpendicular(const Vec& v, float precision = num::Precision) const;
+
+		/* check if [this] and [v] form an acute angle to each other (includes perpendicular) */
+		bool isAcute(const Vec& v, float precision = num::Precision) const;
+
+		/* check if [this] and [v] form an obtuse angle to each other (includes perpendicular) */
+		bool isObtuse(const Vec& v, float precision = num::Precision) const;
+
+		/* compute the factor which multiplied with [this] will result in a projection of [v] onto [this] and thereby parallel to [this] */
+		float projectf(const Vec& v) const;
 
 		/* compute a vector which is a projection of [v] onto [this] and thereby parallel to [this] */
 		Vec project(const Vec& v) const;
 
-		/* compute the factor which multiplied with [this] will result in a projection of [v] onto [this] and thereby parallel to [this] */
-		float projectf(const Vec& v) const;
-	};
+		/* compute a vector which is a perpendicular to [this] and equals [v] when added to [this] */
+		Vec perpendicular(const Vec& v) const;
 
-	/* define the vector multiplication from the right */
-	Vec operator*(float s, const Vec& v);
+		/* compute the factor which multiplied with [this] will result in a vector parallel to [this] which reaches the point [v] i.e. it is perpendicular to [v] when subtracted from [v] (invalid result if [this] and [v] are perpendicular) */
+		float reachf(const Vec& v) const;
+
+		/* compute a vector which is parallel to [this] which reaches the point [v] i.e. it is perpendicular to [v] when subtracted from [v] (invalid result if [this] and [v] are perpendicular) */
+		Vec reach(const Vec& v) const;
+
+		/* compute a vector which is perpendicular to [this] but when added to [this] will be parallel to [v] (invalid result if [this] and [v] are perpendicular) */
+		Vec passing(const Vec& v) const;
+
+		/* compute the factor which multiplied with [this] will at least pass the vector [v] if it has not already been passed */
+		float passPointf(const Vec& v) const;
+
+		/* compute the vector which parallel to [this] and will at least pass the vector [v] if it has not already been passed */
+		Vec passPoint(const Vec& v) const;
+	};
 
 	/* define the line object */
 	struct Line {
 		Vec o;
 		Vec d;
-
-	public:
-		struct Linear {
-			float s;
-			float t;
-
-		public:
-			Linear();
-			Linear(float s, float t);
-		};
 
 	public:
 		Line();
@@ -297,16 +321,6 @@ namespace num {
 		Vec o;
 		Vec a;
 		Vec b;
-
-	public:
-		struct Linear {
-			float s;
-			float t;
-
-		public:
-			Linear();
-			Linear(float _s, float _t);
-		};
 
 	public:
 		Plane();
@@ -439,4 +453,27 @@ namespace num {
 		/* compute the linear combination to reach the point [p] when the point lies on the plane */
 		Linear linear(const Vec& p, bool* touching = 0, float precision = num::Precision) const;
 	};
+
+	/* define the vector multiplication from the right */
+	Vec operator*(float s, const Vec& v);
+
+	/* define the out streaming operator */
+	std::ostream& operator<<(std::ostream& out, const Linear& l);
+	std::wostream& operator<<(std::wostream& out, const Linear& l);
+	std::ostream& operator<<(std::ostream& out, const Vec& v);
+	std::wostream& operator<<(std::wostream& out, const Vec& v);
+	std::ostream& operator<<(std::ostream& out, const Line& l);
+	std::wostream& operator<<(std::wostream& out, const Line& l);
+	std::ostream& operator<<(std::ostream& out, const Plane& p);
+	std::wostream& operator<<(std::wostream& out, const Plane& p);
+
+	/* define the in streaming operator */
+	std::istream& operator>>(std::istream& in, Linear& l);
+	std::wistream& operator>>(std::wistream& in, Linear& l);
+	std::istream& operator>>(std::istream& in, Vec& v);
+	std::wistream& operator>>(std::wistream& in, Vec& v);
+	std::istream& operator>>(std::istream& in, Line& l);
+	std::wistream& operator>>(std::wistream& in, Line& l);
+	std::istream& operator>>(std::istream& in, Plane& p);
+	std::wistream& operator>>(std::wistream& in, Plane& p);
 }

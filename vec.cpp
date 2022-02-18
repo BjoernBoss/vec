@@ -1,5 +1,9 @@
 #include "vec.h"
 
+/* implement the linear helper object */
+num::Linear::Linear() : s(0.0f), t(0.0f) {}
+num::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
+
 /* implement the vector object */
 num::Vec::Vec() : x(0.0f), y(0.0f), z(0.0f) {}
 num::Vec::Vec(float f) : x(f), y(f), z(f) {}
@@ -245,34 +249,52 @@ bool num::Vec::zeroZ(float precision) const {
 bool num::Vec::zero(float precision) const {
 	return num::Zero(lenSquared(), precision);
 }
-num::Vec num::Vec::perpendicular(const Vec& v) const {
-	/*
-	*	(v - [this] * a) * [this] = 0
-	*	Solve for a and insert
-	*/
-	const float a = dot(v) / dot(*this);
-	return v - *this * a;
+bool num::Vec::isPerpendicular(const Vec& v, float precision) const {
+	return num::Zero(dot(v), precision);
 }
-num::Vec num::Vec::project(const Vec& v) const {
-	float factor = dot(v) / lenSquared();
-	return *this * factor;
+bool num::Vec::isAcute(const Vec& v, float precision) const {
+	return dot(v) >= -precision;
+}
+bool num::Vec::isObtuse(const Vec& v, float precision) const {
+	return dot(v) <= precision;
 }
 float num::Vec::projectf(const Vec& v) const {
 	return dot(v) / lenSquared();
 }
+num::Vec num::Vec::project(const Vec& v) const {
+	return *this * projectf(v);
+}
+num::Vec num::Vec::perpendicular(const Vec& v) const {
+	return v - project(v);
+}
+float num::Vec::reachf(const Vec& v) const {
+	return 1.0f / v.projectf(*this);
 
-/* implement the vector multiplication from the right */
-num::Vec num::operator*(float s, const Vec& v) {
-	return v * s;
+	return v.lenSquared() / dot(v);
+}
+num::Vec num::Vec::reach(const Vec& v) const {
+	return *this * reachf(v);
+}
+num::Vec num::Vec::passing(const Vec& v) const {
+	return v.reach(*this) - *this;
+}
+float num::Vec::passPointf(const Vec& v) const {
+	/* check if the vectors are perpendicular in which case the point will always be considered passed */
+	if (num::Zero(dot(v)))
+		return 1.0f;
+
+	/* compute the factor required to let this vector reach v and return it if its greater than 1 */
+	return std::max(1.0f, reachf(v));
+}
+num::Vec num::Vec::passPoint(const Vec& v) const {
+	return *this * passPointf(v);
 }
 
 /* implement the line object */
-num::Line::Linear::Linear() : s(0.0f), t(0.0f) {}
-num::Line::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
 num::Line::Line() {}
 num::Line::Line(const Vec& _d) : d(_d) {}
 num::Line::Line(const Vec& _o, const Vec& _d) : o(_o), d(_d) {}
-num::Line::Linear num::Line::fLinComb(const Line& l, size_t index, bool& parallel, float precision) const {
+num::Linear num::Line::fLinComb(const Line& l, size_t index, bool& parallel, float precision) const {
 	/*
 	*	E: o + s * d
 	*	F: l.o + t * l.d
@@ -365,7 +387,7 @@ num::Vec num::Line::closest(const Vec& p) const {
 	const float a = closestf(p);
 	return o + d * a - p;
 }
-num::Line::Linear num::Line::closestf(const Line& l) const {
+num::Linear num::Line::closestf(const Line& l) const {
 	/*
 	*	E: o + s * d
 	*	F: l.o + t * l.d
@@ -486,7 +508,7 @@ num::Vec num::Line::intersectPlaneZ(float zPlane, bool* invalid, float precision
 	const float a = intersectPlaneZf(zPlane, invalid, precision);
 	return o + d * a;
 }
-num::Line::Linear num::Line::intersectXf(const Line& l, bool* invalid, float precision) const {
+num::Linear num::Line::intersectXf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
@@ -501,7 +523,7 @@ num::Vec num::Line::intersectX(const Line& l, bool* invalid, float precision) co
 	const float s = intersectXf(l, invalid, precision).s;
 	return o + d * s;
 }
-num::Line::Linear num::Line::intersectYf(const Line& l, bool* invalid, float precision) const {
+num::Linear num::Line::intersectYf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
@@ -516,7 +538,7 @@ num::Vec num::Line::intersectY(const Line& l, bool* invalid, float precision) co
 	const float s = intersectYf(l, invalid, precision).s;
 	return o + d * s;
 }
-num::Line::Linear num::Line::intersectZf(const Line& l, bool* invalid, float precision) const {
+num::Linear num::Line::intersectZf(const Line& l, bool* invalid, float precision) const {
 	bool parallel = false;
 
 	/* compute the linear combination */
@@ -531,7 +553,7 @@ num::Vec num::Line::intersectZ(const Line& l, bool* invalid, float precision) co
 	const float s = intersectZf(l, invalid, precision).s;
 	return o + d * s;
 }
-num::Line::Linear num::Line::intersectf(const Line& l, bool* invalid, float precision) const {
+num::Linear num::Line::intersectf(const Line& l, bool* invalid, float precision) const {
 	/*
 	*	Select the axis to compute the combination for by computing the cross product between
 	*	the two and then selecting the smallest component which ensures that the other two components
@@ -559,12 +581,10 @@ num::Vec num::Line::intersect(const Line& l, bool* invalid, float precision) con
 }
 
 /* implement the plane object */
-num::Plane::Linear::Linear() : s(0.0f), t(0.0f) {}
-num::Plane::Linear::Linear(float _s, float _t) : s(_s), t(_t) {}
 num::Plane::Plane() {}
 num::Plane::Plane(const Vec& _a, const Vec& _b) : a(_a), b(_b) {}
 num::Plane::Plane(const Vec& _o, const Vec& _a, const Vec& _b) : o(_o), a(_a), b(_b) {}
-num::Plane::Linear num::Plane::fLinComb(const Vec& p, size_t index) const {
+num::Linear num::Plane::fLinComb(const Vec& p, size_t index) const {
 	/*
 	*	compute the linar combination that results in the point [p] while ignoring the component passed in as index (here in X-Y plane)
 	*	p = o + s * a + t * b
@@ -891,7 +911,7 @@ num::Line num::Plane::intersect(const Plane& p, bool* invalid, float precision) 
 		_x3 - _x2 * (_x3.dot(crs) * dt)
 	);
 }
-num::Plane::Linear num::Plane::intersectf(const Line& l, bool* invalid, float precision) const {
+num::Linear num::Plane::intersectf(const Line& l, bool* invalid, float precision) const {
 	const Vec crs = a.cross(b);
 
 	/* check if the line and the plane are parallel */
@@ -941,16 +961,16 @@ num::Vec num::Plane::intersect(const Line& l, bool* invalid, float precision) co
 	const float a = (o - l.o).dot(crs) / l.d.dot(crs);
 	return l.o + l.d * a;
 }
-num::Plane::Linear num::Plane::linearX(const Vec& p) const {
+num::Linear num::Plane::linearX(const Vec& p) const {
 	return fLinComb(p, Vec::Component::ComponentX);
 }
-num::Plane::Linear num::Plane::linearY(const Vec& p) const {
+num::Linear num::Plane::linearY(const Vec& p) const {
 	return fLinComb(p, Vec::Component::ComponentY);
 }
-num::Plane::Linear num::Plane::linearZ(const Vec& p) const {
+num::Linear num::Plane::linearZ(const Vec& p) const {
 	return fLinComb(p, Vec::Component::ComponentZ);
 }
-num::Plane::Linear num::Plane::linear(const Vec& p, bool* touching, float precision) const {
+num::Linear num::Plane::linear(const Vec& p, bool* touching, float precision) const {
 	/*
 	*	find the smallest component of the cross product which ensures that
 	*	the other two components are larger, as long as the plane is well defined
@@ -964,4 +984,95 @@ num::Plane::Linear num::Plane::linear(const Vec& p, bool* touching, float precis
 	if (touching != 0)
 		*touching = num::Cmp(p.c[index] - o.c[index], r.s * a.c[index] + r.t * b.c[index], precision);
 	return r;
+}
+
+/* implement the vector multiplication from the right */
+num::Vec num::operator*(float s, const Vec& v) {
+	return v * s;
+}
+
+/* implement the in streaming operator */
+std::ostream& num::operator<<(std::ostream& out, const Linear& l) {
+	return (out << "s: " << l.s << "| t: " << l.t);
+}
+std::wostream& num::operator<<(std::wostream& out, const Linear& l) {
+	return (out << L"s: " << l.s << L"| t: " << l.t);
+}
+std::ostream& num::operator<<(std::ostream& out, const Vec& v) {
+	return (out << v.x << ", " << v.y << ", " << v.z);
+}
+std::wostream& num::operator<<(std::wostream& out, const Vec& v) {
+	return (out << v.x << L", " << v.y << L", " << v.z);
+}
+std::ostream& num::operator<<(std::ostream& out, const Line& l) {
+	return (out << l.o << " -> " << l.d);
+}
+std::wostream& num::operator<<(std::wostream& out, const Line& l) {
+	return (out << l.o << L" -> " << l.d);
+}
+std::ostream& num::operator<<(std::ostream& out, const Plane& p) {
+	return (out << p.o << " -> " << p.a << " | " << p.b);
+}
+std::wostream& num::operator<<(std::wostream& out, const Plane& p) {
+	return (out << p.o << L" -> " << p.a << L" | " << p.b);
+}
+
+/* implement the out streaming operator */
+std::istream& num::operator>>(std::istream& in, Linear& l) {
+	char pad0 = 0, pad1 = 0, pad2 = 0, pad3 = 0, pad4 = 0;
+	in >> pad0 >> pad1 >> l.s >> pad2 >> pad3 >> pad4 >> l.t;
+	if (pad0 != 's' || pad1 != ':' || pad2 != '|' || pad3 != 't' || pad4 != ':')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::wistream& num::operator>>(std::wistream& in, Linear& l) {
+	wchar_t pad0 = 0, pad1 = 0, pad2 = 0, pad3 = 0, pad4 = 0;
+	in >> pad0 >> pad1 >> l.s >> pad2 >> pad3 >> pad4 >> l.t;
+	if (pad0 != L's' || pad1 != L':' || pad2 != L'|' || pad3 != L't' || pad4 != L':')
+		in.setstate(std::ios::failbit);
+	return in;
+
+}
+std::istream& num::operator>>(std::istream& in, Vec& v) {
+	char pad0 = 0, pad1 = 0;
+	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
+	if (pad0 != ',' || pad1 != ',')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::wistream& num::operator>>(std::wistream& in, Vec& v) {
+	wchar_t pad0 = 0, pad1 = 0;
+	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
+	if (pad0 != L',' || pad1 != L',')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::istream& num::operator>>(std::istream& in, Line& l) {
+	char pad0 = 0, pad1 = 0;
+	in >> l.o >> pad0 >> pad1 >> l.d;
+	if (pad0 != '-' || pad1 != '>')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::wistream& num::operator>>(std::wistream& in, Line& l) {
+	wchar_t pad0 = 0, pad1 = 0;
+	in >> l.o >> pad0 >> pad1 >> l.d;
+	if (pad0 != L'-' || pad1 != L'>')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::istream& num::operator>>(std::istream& in, Plane& p) {
+	char pad0 = 0, pad1 = 0, pad2 = 0;
+	in >> p.o >> pad0 >> pad1 >> p.a >> pad2 >> p.b;
+	if (pad0 != '-' || pad1 != '>' || pad2 != '|')
+		in.setstate(std::ios::failbit);
+	return in;
+}
+std::wistream& num::operator>>(std::wistream& in, Plane& p) {
+	wchar_t pad0 = 0, pad1 = 0, pad2 = 0;
+	in >> p.o >> pad0 >> pad1 >> p.a >> pad2 >> p.b;
+	if (pad0 != L'-' || pad1 != L'>' || pad2 != L'|')
+		in.setstate(std::ios::failbit);
+	return in;
+
 }
