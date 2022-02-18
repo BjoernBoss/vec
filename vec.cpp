@@ -252,10 +252,10 @@ bool num::Vec::zero(float precision) const {
 bool num::Vec::isPerpendicular(const Vec& v, float precision) const {
 	return num::Zero(dot(v), precision);
 }
-bool num::Vec::isAcute(const Vec& v, float precision) const {
+bool num::Vec::isAcuteAngle(const Vec& v, float precision) const {
 	return dot(v) >= -precision;
 }
-bool num::Vec::isObtuse(const Vec& v, float precision) const {
+bool num::Vec::isObtuseAngle(const Vec& v, float precision) const {
 	return dot(v) <= precision;
 }
 float num::Vec::projectf(const Vec& v) const {
@@ -268,8 +268,6 @@ num::Vec num::Vec::perpendicular(const Vec& v) const {
 	return v - project(v);
 }
 float num::Vec::reachf(const Vec& v) const {
-	return 1.0f / v.projectf(*this);
-
 	return v.lenSquared() / dot(v);
 }
 num::Vec num::Vec::reach(const Vec& v) const {
@@ -622,6 +620,14 @@ num::Plane num::Plane::planeZ(float zPlane) const {
 }
 num::Vec num::Plane::normal() const {
 	return a.cross(b);
+}
+float num::Plane::area() const {
+	/* compute the height vector as the vector based on b which only contains
+	*	the components of b which are perpendicular to a */
+	num::Vec hv = a.perpendicular(b);
+
+	/* compute the final area */
+	return std::sqrt(hv.lenSquared() * a.lenSquared()) / 2.0f;
 }
 num::Vec num::Plane::center() const {
 	return o + ((a + b) / 3);

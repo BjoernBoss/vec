@@ -179,10 +179,10 @@ namespace num {
 		bool isPerpendicular(const Vec& v, float precision = num::Precision) const;
 
 		/* check if [this] and [v] form an acute angle to each other (includes perpendicular) */
-		bool isAcute(const Vec& v, float precision = num::Precision) const;
+		bool isAcuteAngle(const Vec& v, float precision = num::Precision) const;
 
 		/* check if [this] and [v] form an obtuse angle to each other (includes perpendicular) */
-		bool isObtuse(const Vec& v, float precision = num::Precision) const;
+		bool isObtuseAngle(const Vec& v, float precision = num::Precision) const;
 
 		/* compute the factor which multiplied with [this] will result in a projection of [v] onto [this] and thereby parallel to [this] */
 		float projectf(const Vec& v) const;
@@ -190,7 +190,7 @@ namespace num {
 		/* compute a vector which is a projection of [v] onto [this] and thereby parallel to [this] */
 		Vec project(const Vec& v) const;
 
-		/* compute a vector which is a perpendicular to [this] and equals [v] when added to [this] */
+		/* compute a vector which is perpendicular to [this] and contains only the components of [v] perpendicular to [this] (lies in the plane defined by [this] and [v]) */
 		Vec perpendicular(const Vec& v) const;
 
 		/* compute the factor which multiplied with [this] will result in a vector parallel to [this] which reaches the point [v] i.e. it is perpendicular to [v] when subtracted from [v] (invalid result if [this] and [v] are perpendicular) */
@@ -353,6 +353,9 @@ namespace num {
 
 		/* compute the normal vector of the plane */
 		Vec normal() const;
+
+		/* compute the area of the triangle created by the plane [this] */
+		float area() const;
 
 		/* compute the center point of the triangle produced by the two extent vectors and the origin */
 		Vec center() const;
