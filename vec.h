@@ -157,23 +157,32 @@ namespace num {
 		/* check if [this] and [v] describe the same vector but scaled by a positive factor */
 		bool sign(const Vec& v, float precision = num::Precision) const;
 
-		/* check if [this] and [v] describe the same vector (point into the same direction with the same length in regard to the precision and the magnitude of the separate components) */
-		bool match(const Vec& v, float precision = num::Precision) const;
-
 		/* check if [this] and [v] are identical (all components are weighted the same) */
 		bool equal(const Vec& v, float precision = num::Precision) const;
 
-		/* check if the x-component of this vector is negligible */
+		/* check if the x-component of this vector is zero */
 		bool zeroX(float precision = num::Precision) const;
 
-		/* check if the y-component of this vector is negligible */
+		/* check if the y-component of this vector is zero */
 		bool zeroY(float precision = num::Precision) const;
 
-		/* check if the z-component of this vector is negligible */
+		/* check if the z-component of this vector is zero */
 		bool zeroZ(float precision = num::Precision) const;
 
-		/* check if the vector is negligible */
+		/* check if the vector is zero */
 		bool zero(float precision = num::Precision) const;
+
+		/* check if [this] and [v] describe the same vector (point into the same direction with the same length in regard to the precision and the magnitude of the separate components) */
+		bool match(const Vec& v, float precision = num::Precision) const;
+
+		/* check if the x-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
+		bool negligibleX(float precision = num::Precision) const;
+
+		/* check if the y-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
+		bool negligibleY(float precision = num::Precision) const;
+
+		/* check if the z-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
+		bool negligibleZ(float precision = num::Precision) const;
 
 		/* check if [this] and [v] are perpendicular to each other */
 		bool isPerpendicular(const Vec& v, float precision = num::Precision) const;

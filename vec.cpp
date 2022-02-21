@@ -229,9 +229,6 @@ bool num::Vec::sign(const Vec& v, float precision) const {
 	/* check if the vectors are equal when scaled */
 	return equal(v * f, precision);
 }
-bool num::Vec::match(const Vec& v, float precision) const {
-	return num::Cmp(dot(v), lenSquared(), precision);
-}
 bool num::Vec::equal(const Vec& v, float precision) const {
 	/* dont subtract and then compare with zero as small errors will have a much larger effect on
 	*	the result due to the canceling effects of subtraction on the information */
@@ -248,6 +245,18 @@ bool num::Vec::zeroZ(float precision) const {
 }
 bool num::Vec::zero(float precision) const {
 	return num::Zero(lenSquared(), precision);
+}
+bool num::Vec::match(const Vec& v, float precision) const {
+	return num::Cmp(dot(v), lenSquared(), precision);
+}
+bool num::Vec::negligibleX(float precision) const {
+	return num::Cmp(lenSquared(), planeX().lenSquared(), precision);
+}
+bool num::Vec::negligibleY(float precision) const {
+	return num::Cmp(lenSquared(), planeY().lenSquared(), precision);
+}
+bool num::Vec::negligibleZ(float precision) const {
+	return num::Cmp(lenSquared(), planeZ().lenSquared(), precision);
 }
 bool num::Vec::isPerpendicular(const Vec& v, float precision) const {
 	return num::Zero(dot(v), precision);
