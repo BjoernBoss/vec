@@ -26,4 +26,10 @@ namespace num {
 		return (deg * 180.0f) / Pi;
 	}
 	float ToAngle(float x, float y);
+
+	/* define the angle comparison functions which computes the angle to add to [base] to reach [test] in degrees */
+	float AngleDiff(float base, float test);
+
+	/* define the angle comparison functions which computes the absolute difference between [base] and [test] in degrees */
+	float AngleAbs(float base, float test);
 }

@@ -26,3 +26,19 @@ float num::ToAngle(float x, float y) {
 		deg += 360.0f;
 	return deg;
 }
+
+/* implement the angle comparison functions */
+float num::AngleDiff(float base, float test) {
+	float diff = test - base;
+	if (diff <= -180.0f)
+		diff += 360.0f;
+	else if (diff > 180.0f)
+		diff -= 360.0f;
+	return diff;
+}
+float num::AngleAbs(float base, float test) {
+	float diff = std::abs(test - base);
+	if (diff > 180.0f)
+		diff = 360.0f - diff;
+	return diff;
+}
