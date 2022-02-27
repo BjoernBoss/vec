@@ -366,6 +366,15 @@ namespace num {
 		/* compute the area of the triangle created by the plane [this] */
 		float area() const;
 
+		/* compute the area of the triangle created by the plane [this] when projected onto the Y-Z plane */
+		float areaX() const;
+
+		/* compute the area of the triangle created by the plane [this] when projected onto the X-Z plane */
+		float areaY() const;
+
+		/* compute the area of the triangle created by the plane [this] when projected onto the X-Y plane */
+		float areaZ() const;
+
 		/* compute the center point of the triangle produced by the two extent vectors and the origin */
 		Vec center() const;
 

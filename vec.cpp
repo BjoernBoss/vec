@@ -631,12 +631,24 @@ num::Vec num::Plane::normal() const {
 	return a.cross(b);
 }
 float num::Plane::area() const {
-	/* compute the height vector as the vector based on b which only contains
-	*	the components of b which are perpendicular to a */
-	num::Vec hv = a.perpendicular(b);
-
-	/* compute the final area */
-	return std::sqrt(hv.lenSquared() * a.lenSquared()) / 2.0f;
+	/* the magnitude of the vector of the cross product is equivalent to the area of the
+	*	parallelogram created by the two component vectors of the cross product */
+	return a.cross(b).len() / 2.0f;
+}
+float num::Plane::areaX() const {
+	/* the magnitude of the vector of the cross product is equivalent to the area of the
+	*	parallelogram created by the two component vectors of the cross product */
+	return a.crossX(b) / 2.0f;
+}
+float num::Plane::areaY() const {
+	/* the magnitude of the vector of the cross product is equivalent to the area of the
+	*	parallelogram created by the two component vectors of the cross product */
+	return a.crossY(b) / 2.0f;
+}
+float num::Plane::areaZ() const {
+	/* the magnitude of the vector of the cross product is equivalent to the area of the
+	*	parallelogram created by the two component vectors of the cross product */
+	return a.crossZ(b) / 2.0f;
 }
 num::Vec num::Plane::center() const {
 	return o + ((a + b) / 3);
