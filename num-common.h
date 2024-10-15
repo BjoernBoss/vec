@@ -4,9 +4,18 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <istream>
+#include <ostream>
 
-/* define the float number helper */
 namespace num {
+	/*
+	*	- right-handed system
+	*	- counterclockwise rotations when the corresponding axis points towards the observer
+	*	- angles are calculated in degrees
+	*/
+	struct Line;
+	struct Plane;
+
 	static constexpr float Pi = 3.1415926536f;
 	static constexpr float SqrtTwo = 1.4142135624f;
 	static constexpr float Precision = 0.00001f;
@@ -32,4 +41,19 @@ namespace num {
 
 	/* define the angle comparison functions which computes the absolute difference between [base] and [test] in degrees */
 	float AngleAbs(float base, float test);
+
+	struct Linear {
+	public:
+		float s = 0.0f;
+		float t = 0.0f;
+
+	public:
+		Linear();
+		Linear(float s, float t);
+	};
+
+	std::ostream& operator<<(std::ostream& out, const Linear& l);
+	std::wostream& operator<<(std::wostream& out, const Linear& l);
+	std::istream& operator>>(std::istream& in, Linear& l);
+	std::wistream& operator>>(std::wistream& in, Linear& l);
 }
