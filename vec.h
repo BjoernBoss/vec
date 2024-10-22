@@ -8,9 +8,15 @@
 #include "num-line.h"
 #include "num-plane.h"
 
+namespace num {
+
+	using Constf = num::Const<float>;
+	using Constd = num::Const<double>;
+}
+
 template <class Type>
-constexpr num::Line num::Vec<Type>::line(const num::Vec<Type>& p) const {
-	return num::Line{ *this, p - *this };
+constexpr num::Line<Type> num::Vec<Type>::line(const num::Vec<Type>& p) const {
+	return num::Line<Type>{ *this, p - *this };
 }
 
 template <class Type>
@@ -43,20 +49,24 @@ std::wistream& operator>>(std::wistream& in, num::Vec<Type>& v) {
 	return in;
 }
 
-std::ostream& operator<<(std::ostream& out, const num::Line& l) {
+template <class Type>
+std::ostream& operator<<(std::ostream& out, const num::Line<Type>& l) {
 	return (out << l.o << " -> " << l.d);
 }
-std::wostream& operator<<(std::wostream& out, const num::Line& l) {
+template <class Type>
+std::wostream& operator<<(std::wostream& out, const num::Line<Type>& l) {
 	return (out << l.o << L" -> " << l.d);
 }
-std::istream& operator>>(std::istream& in, num::Line& l) {
+template <class Type>
+std::istream& operator>>(std::istream& in, num::Line<Type>& l) {
 	char pad0 = 0, pad1 = 0;
 	in >> l.o >> pad0 >> pad1 >> l.d;
 	if (pad0 != '-' || pad1 != '>')
 		in.setstate(std::ios::failbit);
 	return in;
 }
-std::wistream& operator>>(std::wistream& in, num::Line& l) {
+template <class Type>
+std::wistream& operator>>(std::wistream& in, num::Line<Type>& l) {
 	wchar_t pad0 = 0, pad1 = 0;
 	in >> l.o >> pad0 >> pad1 >> l.d;
 	if (pad0 != L'-' || pad1 != L'>')

@@ -3,7 +3,7 @@
 #include "num-common.h"
 
 namespace num {
-	struct Line;
+	template <class> struct Line;
 	struct Plane;
 
 	/* defines the component layout in memory */
@@ -247,7 +247,7 @@ namespace num {
 		}
 
 		/* construct the line [this:(p-this)] */
-		constexpr num::Line line(const num::Vec<Type>& p) const;
+		constexpr num::Line<Type> line(const num::Vec<Type>& p) const;
 
 		/* construct the plane [this:(p0-this):(p1-this)] */
 		constexpr num::Plane plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const;
@@ -284,7 +284,7 @@ namespace num {
 		}
 
 		/* check if [this] and [v] describe the same vector but scaled by any factor */
-		constexpr bool parallel(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool parallel(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			/* extract the largest components and check if the vectors are considered zero */
 			const size_t largest[2] = { comp(true), v.comp(true) };
 			if (num::Abs(c[largest[0]]) <= precision)
@@ -300,7 +300,7 @@ namespace num {
 		}
 
 		/* check if [this] and [v] describe the same vector but scaled by a positive factor */
-		constexpr bool sign(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool sign(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			/* extract the largest components and check if the vectors are considered zero */
 			const size_t largest[2] = { comp(true), v.comp(true) };
 			if (num::Abs(c[largest[0]]) <= precision)
@@ -318,64 +318,64 @@ namespace num {
 		}
 
 		/* check if [this] and [v] are identical (all components are weighted the same) */
-		constexpr bool equal(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool equal(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			/* dont subtract and then compare with zero as small errors will have a much larger effect on
 			*	the result due to the canceling effects of subtraction on the information */
 			return num::Cmp(x, v.x, precision) && num::Cmp(y, v.y, precision) && num::Cmp(z, v.z, precision);
 		}
 
 		/* check if the x-component of this vector is zero */
-		constexpr bool zeroX(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool zeroX(Type precision = num::Const<Type>::Precision) const {
 			return num::Zero(x, precision);
 		}
 
 		/* check if the y-component of this vector is zero */
-		constexpr bool zeroY(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool zeroY(Type precision = num::Const<Type>::Precision) const {
 			return num::Zero(y, precision);
 		}
 
 		/* check if the z-component of this vector is zero */
-		constexpr bool zeroZ(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool zeroZ(Type precision = num::Const<Type>::Precision) const {
 			return num::Zero(z, precision);
 		}
 
 		/* check if the vector is zero */
-		constexpr bool zero(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool zero(Type precision = num::Const<Type>::Precision) const {
 			return num::Zero(lenSquared(), precision);
 		}
 
 		/* check if [this] and [v] describe the same vector (point into the same direction with the same length in regard to the precision and the magnitude of the separate components) */
-		constexpr bool match(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool match(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			return num::Cmp(dot(v), lenSquared(), precision);
 		}
 
 		/* check if the x-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
-		constexpr bool negligibleX(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool negligibleX(Type precision = num::Const<Type>::Precision) const {
 			return num::Cmp(lenSquared(), planeX().lenSquared(), precision);
 		}
 
 		/* check if the y-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
-		constexpr bool negligibleY(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool negligibleY(Type precision = num::Const<Type>::Precision) const {
 			return num::Cmp(lenSquared(), planeY().lenSquared(), precision);
 		}
 
 		/* check if the z-component of the vector is negligible relative to the other components (in regard to the precision and the magnitude of the separate components) */
-		constexpr bool negligibleZ(Type precision = num::Precision<Type>::Def) const {
+		constexpr bool negligibleZ(Type precision = num::Const<Type>::Precision) const {
 			return num::Cmp(lenSquared(), planeZ().lenSquared(), precision);
 		}
 
 		/* check if [this] and [v] are perpendicular to each other */
-		constexpr bool isPerpendicular(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool isPerpendicular(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			return num::Zero(dot(v), precision);
 		}
 
 		/* check if [this] and [v] form an acute angle to each other (includes perpendicular) */
-		constexpr bool isAcuteAngle(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool isAcuteAngle(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			return dot(v) >= -precision;
 		}
 
 		/* check if [this] and [v] form an obtuse angle to each other (includes perpendicular) */
-		constexpr bool isObtuseAngle(const num::Vec<Type>& v, Type precision = num::Precision<Type>::Def) const {
+		constexpr bool isObtuseAngle(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			return dot(v) <= precision;
 		}
 
@@ -429,7 +429,4 @@ namespace num {
 	constexpr num::Vec<Type> operator*(Type s, const num::Vec<Type>& v) {
 		return v * s;
 	}
-
-	using Vecf = num::Vec<float>;
-	using Vecd = num::Vec<double>;
 }

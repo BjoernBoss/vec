@@ -12,15 +12,16 @@ namespace num {
 	*	- angles are calculated in degrees
 	*/
 
-	static constexpr double Pi = 3.1415926536;
-	static constexpr double ZeroPrecisionFactor = 0.01;
-
-	template <class Type> struct Precision;
-	template <> struct Precision<float> {
-		static constexpr float Def = 0.00001f;
+	template <class Type> struct Const;
+	template <> struct Const<float> {
+		static constexpr float Precision = 0.00001f;
+		static constexpr float Pi = 3.14159265f;
+		static constexpr float ZeroPrecisionFactor = 0.01f;
 	};
-	template <> struct Precision<double> {
-		static constexpr double Def = 0.00000001;
+	template <> struct Const<double> {
+		static constexpr double Precision = 0.00000001;
+		static constexpr double Pi = 3.141592653589793;
+		static constexpr double ZeroPrecisionFactor = 0.01;
 	};
 
 	/* float abs-function (not using std implementation to allow for constexpr) */
@@ -31,14 +32,14 @@ namespace num {
 
 	/* check if number can be considered zero */
 	template <class Type>
-	constexpr bool Zero(Type a, Type p = num::Precision<Type>::Def) {
+	constexpr bool Zero(Type a, Type p = num::Const<Type>::Precision) {
 		/* dont check for nan as nan will fail this check and thereby return false by default */
-		return num::Abs(a) <= Type(num::ZeroPrecisionFactor * p);
+		return num::Abs(a) <= (num::Const<Type>::ZeroPrecisionFactor * p);
 	}
 
 	/* compare the values for equality, given the corresponding precision */
 	template <class Type>
-	constexpr bool Cmp(Type a, Type b, Type p = num::Precision<Type>::Def) {
+	constexpr bool Cmp(Type a, Type b, Type p = num::Const<Type>::Precision) {
 		if (std::isnan(a) || std::isnan(b))
 			return false;
 		if (a == 0)
@@ -52,12 +53,12 @@ namespace num {
 
 	template <class Type>
 	constexpr Type ToRadian(Type deg) {
-		return deg * Type(num::Pi / 180);
+		return deg * (num::Const<Type>::Pi / 180);
 	}
 
 	template <class Type>
 	constexpr Type ToDegree(Type deg) {
-		return deg * Type(180 / num::Pi);
+		return deg * (180 / num::Const<Type>::Pi);
 	}
 
 	template <class Type>
@@ -88,10 +89,11 @@ namespace num {
 		return diff;
 	}
 
+	template <class Type>
 	struct Linear {
 	public:
-		float s = 0.0f;
-		float t = 0.0f;
+		Type s;
+		Type t;
 
 	public:
 		constexpr Linear() : s{ 0 }, t{ 0 } {}
