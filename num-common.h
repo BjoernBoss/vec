@@ -4,8 +4,6 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
-#include <istream>
-#include <ostream>
 
 namespace num {
 	/*
@@ -13,67 +11,80 @@ namespace num {
 	*	- counterclockwise rotations when the corresponding axis points towards the observer
 	*	- angles are calculated in degrees
 	*/
-	struct Line;
-	struct Plane;
 
-	static constexpr float Pi = 3.1415926536f;
-	static constexpr float Precision = 0.00001f;
-	static constexpr float ZeroPrecisionFactor = 0.01f;
+	static constexpr double Pi = 3.1415926536;
+	static constexpr double ZeroPrecisionFactor = 0.01;
+
+	template <class Type> struct Precision;
+	template <> struct Precision<float> {
+		static constexpr float Def = 0.00001f;
+	};
+	template <> struct Precision<double> {
+		static constexpr double Def = 0.00000001;
+	};
 
 	/* float abs-function (not using std implementation to allow for constexpr) */
-	constexpr float Abs(float v) {
+	template <class Type>
+	constexpr Type Abs(Type v) {
 		return (v < 0 ? -v : v);
 	}
 
 	/* check if number can be considered zero */
-	constexpr bool Zero(float a, float p = num::Precision) {
+	template <class Type>
+	constexpr bool Zero(Type a, Type p = num::Precision<Type>::Def) {
 		/* dont check for nan as nan will fail this check and thereby return false by default */
-		return num::Abs(a) <= num::ZeroPrecisionFactor * p;
+		return num::Abs(a) <= Type(num::ZeroPrecisionFactor * p);
 	}
 
 	/* compare the values for equality, given the corresponding precision */
-	constexpr bool Cmp(float a, float b, float p = num::Precision) {
+	template <class Type>
+	constexpr bool Cmp(Type a, Type b, Type p = num::Precision<Type>::Def) {
 		if (std::isnan(a) || std::isnan(b))
 			return false;
-		if (a == 0.0f)
+		if (a == 0)
 			return num::Zero(b);
-		if (b == 0.0f)
+		if (b == 0)
 			return num::Zero(a);
-		const float _a = num::Abs(a);
-		const float _b = num::Abs(b);
+		const Type _a = num::Abs(a);
+		const Type _b = num::Abs(b);
 		return num::Abs(a - b) <= std::min(_a, _b) * p;
 	}
 
-	constexpr float ToRadian(float deg) {
-		return (deg * num::Pi) / 180.0f;
+	template <class Type>
+	constexpr Type ToRadian(Type deg) {
+		return deg * Type(num::Pi / 180);
 	}
 
-	constexpr float ToDegree(float deg) {
-		return (deg * 180.0f) / num::Pi;
+	template <class Type>
+	constexpr Type ToDegree(Type deg) {
+		return deg * Type(180 / num::Pi);
 	}
 
-	constexpr float ToAngle(float x, float y) {
-		float deg = num::ToDegree(std::atan2(x, y));
+	template <class Type>
+	constexpr Type ToAngle(Type x, Type y) {
+		Type deg = num::ToDegree(std::atan2(x, y));
 		if (deg < 0)
-			deg += 360.0f;
+			deg += 360;
 		return deg;
 	}
 
 	/* compute the angle to add to [base] to reach [test] in degrees */
-	constexpr float AngleDiff(float base, float test) {
-		float diff = test - base;
-		if (diff <= -180.0f)
-			diff += 360.0f;
-		else if (diff > 180.0f)
-			diff -= 360.0f;
+	template <class Type>
+	constexpr Type AngleDiff(Type base, Type test) {
+		Type diff = test - base;
+		if (diff <= -180)
+			diff += 360;
+		else if (diff > 180)
+			diff -= 360;
 		return diff;
 	}
 
 	/* compute the absolute difference between [base] and [test] in degrees */
-	constexpr float AngleAbs(float base, float test) {
-		float diff = num::Abs(test - base);
-		if (diff > 180.0f)
-			diff = 360.0f - diff;
+	template <class Type>
+	constexpr Type AngleAbs(Type base, Type test) {
+		Type diff = num::Abs(test - base);
+		if (diff > 180)
+			diff = 360 - diff;
 		return diff;
 	}
 
@@ -86,9 +97,4 @@ namespace num {
 		constexpr Linear() : s{ 0 }, t{ 0 } {}
 		constexpr Linear(float s, float t) : s{ s }, t{ t } {}
 	};
-
-	std::ostream& operator<<(std::ostream& out, const Linear& l);
-	std::wostream& operator<<(std::wostream& out, const Linear& l);
-	std::istream& operator>>(std::istream& in, Linear& l);
-	std::wistream& operator>>(std::wistream& in, Linear& l);
 }

@@ -5,18 +5,18 @@
 
 namespace num {
 	struct Plane {
-		num::Vec o;
-		num::Vec a;
-		num::Vec b;
+		num::Vecf o;
+		num::Vecf a;
+		num::Vecf b;
 
 	public:
 		constexpr Plane() = default;
-		constexpr Plane(const num::Vec& a, const num::Vec& b) : a{ a }, b{ b } {}
-		constexpr Plane(const num::Vec& o, const num::Vec& a, const num::Vec& b) : o{ o }, a{ a }, b{ b } {}
+		constexpr Plane(const num::Vecf& a, const num::Vecf& b) : a{ a }, b{ b } {}
+		constexpr Plane(const num::Vecf& o, const num::Vecf& a, const num::Vecf& b) : o{ o }, a{ a }, b{ b } {}
 
 	private:
 		/* compute the linear combination of the two extent vectors to the point in a plane based on the index axis */
-		constexpr num::Linear fLinComb(const num::Vec& p, size_t index) const {
+		constexpr num::Linear fLinComb(const num::Vecf& p, size_t index) const {
 			/*
 			*	compute the linar combination that results in the point [p] while ignoring the component passed in as index (here in X-Y plane)
 			*	p = o + s * a + t * b
@@ -38,17 +38,17 @@ namespace num {
 	public:
 		/* create a plane parallel to the Y-Z plane at distance [d] to the origin */
 		static constexpr num::Plane AxisX(float d = 0.0f) {
-			return num::Plane{ num::Vec::AxisX(d), num::Vec::AxisY(), num::Vec::AxisZ() };
+			return num::Plane{ num::Vecf::AxisX(d), num::Vecf::AxisY(), num::Vecf::AxisZ() };
 		}
 
 		/* create a plane parallel to the X-Z plane at distance [d] to the origin */
 		static constexpr num::Plane AxisY(float d = 1.0f) {
-			return num::Plane{ num::Vec::AxisY(d), num::Vec::AxisX(), num::Vec::AxisZ() };
+			return num::Plane{ num::Vecf::AxisY(d), num::Vecf::AxisX(), num::Vecf::AxisZ() };
 		}
 
 		/* create a plane parallel to the X-Y plane at distance [d] to the origin */
 		static constexpr num::Plane AxisZ(float d = 1.0f) {
-			return num::Plane{ num::Vec::AxisZ(d), num::Vec::AxisX(), num::Vec::AxisY() };
+			return num::Plane{ num::Vecf::AxisZ(d), num::Vecf::AxisX(), num::Vecf::AxisY() };
 		}
 
 	public:
@@ -68,7 +68,7 @@ namespace num {
 		}
 
 		/* compute the normal vector of the plane */
-		constexpr num::Vec normal() const {
+		constexpr num::Vecf normal() const {
 			return a.cross(b);
 		}
 
@@ -101,17 +101,17 @@ namespace num {
 		}
 
 		/* compute the center point of the triangle produced by the two extent vectors and the origin */
-		constexpr num::Vec center() const {
+		constexpr num::Vecf center() const {
 			return o + ((a + b) / 3);
 		}
 
 		/* compute a point on plane [this] */
-		constexpr num::Vec point(float s, float t) const {
+		constexpr num::Vecf point(float s, float t) const {
 			return o + a * s + b * t;
 		}
 
 		/* compute a point on plane [this] */
-		constexpr num::Vec point(const num::Linear& lin) const {
+		constexpr num::Vecf point(const num::Linear& lin) const {
 			return o + a * lin.s + b * lin.t;
 		}
 
@@ -121,7 +121,7 @@ namespace num {
 			*	compute this by computing the intersection point of a line with the
 			*	planes normal vector as direction vector and the zero-vector as its origin
 			*/
-			const num::Vec crs = a.cross(b);
+			const num::Vecf crs = a.cross(b);
 
 			/*
 			*	E: o + s * x1 + t * x2
@@ -129,58 +129,58 @@ namespace num {
 			*	Solve for f and insert
 			*/
 			const float f = o.dot(crs) / crs.dot(crs);
-			const num::Vec _a = a.norm();
+			const num::Vecf _a = a.norm();
 			return num::Plane{ crs * f, _a, _a.perpendicular(b).norm() };
 		}
 
 		/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the Y-Z plane */
-		constexpr num::Vec projectX(const num::Vec& p) const {
+		constexpr num::Vecf projectX(const num::Vecf& p) const {
 			const num::Linear r = fLinComb(p, num::ComponentX);
-			return num::Vec{ o.x + r.s * a.x + r.t * b.x, p.y, p.z };
+			return num::Vecf{ o.x + r.s * a.x + r.t * b.x, p.y, p.z };
 		}
 
 		/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the X-Z plane */
-		constexpr num::Vec projectY(const num::Vec& p) const {
+		constexpr num::Vecf projectY(const num::Vecf& p) const {
 			const num::Linear r = fLinComb(p, num::ComponentY);
-			return num::Vec{ p.x, o.y + r.s * a.y + r.t * b.y, p.z };
+			return num::Vecf{ p.x, o.y + r.s * a.y + r.t * b.y, p.z };
 		}
 
 		/* compute the vector if [p] is being projected onto the plane viewed orthogonally from the X-Y plane */
-		constexpr num::Vec projectZ(const num::Vec& p) const {
+		constexpr num::Vecf projectZ(const num::Vecf& p) const {
 			const num::Linear r = fLinComb(p, num::ComponentZ);
-			return num::Vec{ p.x, p.y, o.z + r.s * a.z + r.t * b.z };
+			return num::Vecf{ p.x, p.y, o.z + r.s * a.z + r.t * b.z };
 		}
 
 		/* compute the vector if [v] is being projected onto the plane */
-		constexpr num::Vec project(const num::Vec& v) const {
+		constexpr num::Vecf project(const num::Vecf& v) const {
 			/*
 			*	compute the projection onto the normal of the plane and subtract it from p
 			*	as this will result in only the part on the vector within the plane
 			*/
-			const num::Vec crs = a.cross(b);
+			const num::Vecf crs = a.cross(b);
 			return v - crs.project(v);
 		}
 
 		/* check if [p] lies within the triangle of a and b when projected orthogonally onto the Y-Z plane */
-		constexpr bool inTriangleX(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inTriangleX(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentX);
 			return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 		}
 
 		/* check if [p] lies within the triangle of a and b when projected orthogonally onto the X-Z plane */
-		constexpr bool inTriangleY(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inTriangleY(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentY);
 			return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 		}
 
 		/* check if [p] lies within the triangle of a and b when projected orthogonally onto the X-Y plane */
-		constexpr bool inTriangleZ(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inTriangleZ(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentZ);
 			return r.s >= -precision && r.t >= -precision && (r.s + r.t) <= (1.0f + precision);
 		}
 
 		/* check if [p] lies within the triangle of a and b */
-		constexpr bool inTriangle(const num::Vec& p, bool* touching = 0, float precision = num::Precision) const {
+		constexpr bool inTriangle(const num::Vecf& p, bool* touching = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	find the smallest component of the cross product which ensures that
 			*	the other two components are larger, as long as the plane is well defined
@@ -197,25 +197,25 @@ namespace num {
 		}
 
 		/* check if [p] lies within the cone of a and b when projected orthogonally onto the Y-Z plane */
-		constexpr bool inConeX(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inConeX(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentX);
 			return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 		}
 
 		/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Z plane */
-		constexpr bool inConeY(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inConeY(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentY);
 			return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 		}
 
 		/* check if [p] lies within the cone of a and b when projected orthogonally onto the X-Y plane */
-		constexpr bool inConeZ(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool inConeZ(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			const num::Linear r = fLinComb(p, num::ComponentZ);
 			return r.s >= -precision && r.t >= -precision && (r.s <= 1.0f + precision) && (r.t <= 1.0f + precision);
 		}
 
 		/* check if [p] lies within the cone of a and b */
-		constexpr bool inCone(const num::Vec& p, bool* touching = 0, float precision = num::Precision) const {
+		constexpr bool inCone(const num::Vecf& p, bool* touching = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	find the smallest component of the cross product which ensures that
 			*	the other two components are larger, as long as the plane is well defined
@@ -232,7 +232,7 @@ namespace num {
 		}
 
 		/* check if [p] lies on the plane */
-		constexpr bool touch(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool touch(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			/*
 			*	find the smallest component of the cross product which ensures that
 			*	the other two components are larger, as long as the plane is well defined
@@ -243,29 +243,29 @@ namespace num {
 			num::Linear r = fLinComb(p, index);
 
 			/* compute the point on the plane where the given point is expected to be */
-			const Vec t = point(r);
+			const Vecf t = point(r);
 
 			/* compare the point on the plane with the given point */
 			return p.equal(t, precision);
 		}
 
 		/* check if the plane [p] and plane [this] describe the same plane */
-		constexpr bool equal(const num::Plane& p, float precision = num::Precision) const {
+		constexpr bool equal(const num::Plane& p, float precision = num::Precision<float>::Def) const {
 			return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
 		}
 
 		/* check if the plane [p] and plane [this] describe the identically same plane */
-		constexpr bool identical(const num::Plane& p, float precision = num::Precision) const {
+		constexpr bool identical(const num::Plane& p, float precision = num::Precision<float>::Def) const {
 			return p.o.equal(o, precision) && p.a.equal(a, precision) && p.b.equal(b, precision);
 		}
 
 		/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */
-		constexpr num::Vec closest(const num::Vec& p) const {
+		constexpr num::Vecf closest(const num::Vecf& p) const {
 			/*
 			*	compute this by computing the intersection point of a line with the
 			*	planes normal vector as direction vector and the point as origin
 			*/
-			const num::Vec crs = a.cross(b);
+			const num::Vecf crs = a.cross(b);
 
 			/*
 			*	E: o + s * x1 + t * x2
@@ -277,14 +277,14 @@ namespace num {
 		}
 
 		/* compute the vector of steepest ascent in the plane for the X axis */
-		constexpr num::Vec steepestX() const {
+		constexpr num::Vecf steepestX() const {
 			/*
 			*	If a and b are perpendicular to each other and have the same length,
 			*	the vector of steepest ascent can be computed as follows:
 			*
 			*	steepest = a * a.x + b * b.x
 			*/
-			num::Vec t = a.perpendicular(b);
+			num::Vecf t = a.perpendicular(b);
 
 			/* stretch the vectors to the same lengths */
 			const float lF = a.lenSquared() / t.lenSquared();
@@ -295,14 +295,14 @@ namespace num {
 		}
 
 		/* compute the vector of steepest ascent in the plane for the Y axis */
-		constexpr num::Vec steepestY() const {
+		constexpr num::Vecf steepestY() const {
 			/*
 			*	If a and b are perpendicular to each other and have the same length,
 			*	the vector of steepest ascent can be computed as follows:
 			*
 			*	steepest = a * a.y + b * b.y
 			*/
-			num::Vec t = a.perpendicular(b);
+			num::Vecf t = a.perpendicular(b);
 
 			/* stretch the vectors to the same lengths */
 			const float lF = a.lenSquared() / t.lenSquared();
@@ -313,14 +313,14 @@ namespace num {
 		}
 
 		/* compute the vector of steepest ascent in the plane for the Z axis */
-		constexpr num::Vec steepestZ() const {
+		constexpr num::Vecf steepestZ() const {
 			/*
 			*	If a and b are perpendicular to each other and have the same length,
 			*	the vector of steepest ascent can be computed as follows:
 			*
 			*	steepest = a * a.z + b * b.z
 			*/
-			num::Vec t = a.perpendicular(b);
+			num::Vecf t = a.perpendicular(b);
 
 			/* stretch the vectors to the same lengths */
 			const float lF = a.lenSquared() / t.lenSquared();
@@ -331,13 +331,13 @@ namespace num {
 		}
 
 		/* compute the intersecting line between the Y-Z plane at [xPlane] and plane [this] (invalid if parallel: returns null line) */
-		constexpr num::Line intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Line intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	order the extent-vectors in order to have the one with the larger x component
 			*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
 			*/
-			const num::Vec& _x0 = num::Abs(a.x) < num::Abs(b.x) ? b : a;
-			const num::Vec& _x1 = &_x0 == &a ? b : a;
+			const num::Vecf& _x0 = num::Abs(a.x) < num::Abs(b.x) ? b : a;
+			const num::Vecf& _x1 = &_x0 == &a ? b : a;
 			if (num::Abs(_x0.x) <= precision) {
 				if (invalid)
 					*invalid = true;
@@ -352,19 +352,19 @@ namespace num {
 			*	Solve for s and insert to have t left over, which will be the free variable in the Line
 			*/
 			return num::Line{
-				o + num::Vec(1.0f, _x0.y / _x0.x, _x0.z / _x0.x) * (xPlane - o.x),
-				num::Vec(0.0f, _x1.y - (_x0.y * _x1.x / _x0.x), _x1.z - (_x0.z * _x1.x / _x0.x))
+				o + num::Vecf(1.0f, _x0.y / _x0.x, _x0.z / _x0.x) * (xPlane - o.x),
+				num::Vecf(0.0f, _x1.y - (_x0.y * _x1.x / _x0.x), _x1.z - (_x0.z * _x1.x / _x0.x))
 			};
 		}
 
 		/* compute the intersecting line between the X-Z plane at [yPlane] and plane [this] (invalid if parallel: returns null line) */
-		constexpr num::Line intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Line intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	order the extent-vectors in order to have the one with the larger y component
 			*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
 			*/
-			const num::Vec& _x0 = num::Abs(a.y) < num::Abs(b.y) ? b : a;
-			const num::Vec& _x1 = &_x0 == &a ? b : a;
+			const num::Vecf& _x0 = num::Abs(a.y) < num::Abs(b.y) ? b : a;
+			const num::Vecf& _x1 = &_x0 == &a ? b : a;
 			if (num::Abs(_x0.y) <= precision) {
 				if (invalid)
 					*invalid = true;
@@ -379,19 +379,19 @@ namespace num {
 			*	Solve for s and insert to have t left over, which will be the free variable in the Line
 			*/
 			return num::Line{
-				o + num::Vec(_x0.x / _x0.y, 1.0f, _x0.z / _x0.y) * (yPlane - o.y),
-				num::Vec(_x1.x - (_x0.x * _x1.y / _x0.y), 0.0f, _x1.z - (_x0.z * _x1.y / _x0.y))
+				o + num::Vecf(_x0.x / _x0.y, 1.0f, _x0.z / _x0.y) * (yPlane - o.y),
+				num::Vecf(_x1.x - (_x0.x * _x1.y / _x0.y), 0.0f, _x1.z - (_x0.z * _x1.y / _x0.y))
 			};
 		}
 
 		/* compute the intersecting line between the X-Y plane at [zPlane] and plane [this] (invalid if parallel: returns null line) */
-		constexpr num::Line intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Line intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	order the extent-vectors in order to have the one with the larger z component
 			*	at the front and check if the value is not equal to zero (which would else imply that the planes are parallel)
 			*/
-			const num::Vec& _x0 = num::Abs(a.z) < num::Abs(b.z) ? b : a;
-			const num::Vec& _x1 = &_x0 == &a ? b : a;
+			const num::Vecf& _x0 = num::Abs(a.z) < num::Abs(b.z) ? b : a;
+			const num::Vecf& _x1 = &_x0 == &a ? b : a;
 			if (num::Abs(_x0.z) <= precision) {
 				if (invalid)
 					*invalid = true;
@@ -406,14 +406,14 @@ namespace num {
 			*	Solve for s and insert to have t left over, which will be the free variable in the Line
 			*/
 			return num::Line(
-				o + num::Vec(_x0.x / _x0.z, _x0.y / _x0.z, 1.0f) * (zPlane - o.z),
-				num::Vec(_x1.x - (_x0.x * _x1.z / _x0.z), _x1.y - (_x0.y * _x1.z / _x0.z), 0.0f)
+				o + num::Vecf(_x0.x / _x0.z, _x0.y / _x0.z, 1.0f) * (zPlane - o.z),
+				num::Vecf(_x1.x - (_x0.x * _x1.z / _x0.z), _x1.y - (_x0.y * _x1.z / _x0.z), 0.0f)
 			);
 		}
 
 		/* compute the intersection line of the plane [this] and the plane [p] (invalid if parallel: returns null line) */
-		constexpr num::Line intersect(const num::Plane& p, bool* invalid = 0, float precision = num::Precision) const {
-			const num::Vec crs = a.cross(b);
+		constexpr num::Line intersect(const num::Plane& p, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
+			const num::Vecf crs = a.cross(b);
 
 			/* select the extent-vector which is less parallel to the plane and check if the planes are parallel */
 			const float dtValue[2] = { crs.dot(p.a), crs.dot(p.b) };
@@ -425,8 +425,8 @@ namespace num {
 			}
 			else if (invalid)
 				*invalid = false;
-			const num::Vec& _x2 = aDtValue[0] >= aDtValue[1] ? p.a : p.b;
-			const num::Vec& _x3 = aDtValue[0] >= aDtValue[1] ? p.b : p.a;
+			const num::Vecf& _x2 = aDtValue[0] >= aDtValue[1] ? p.a : p.b;
+			const num::Vecf& _x3 = aDtValue[0] >= aDtValue[1] ? p.b : p.a;
 			const float dt = 1.0f / (aDtValue[0] >= aDtValue[1] ? dtValue[0] : dtValue[1]);
 
 			/*
@@ -443,8 +443,8 @@ namespace num {
 		}
 
 		/* compute the intersection factors of the plane [this] and the line [l] (invalid if parallel: returns 0, 0) */
-		constexpr num::Linear intersectf(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
-			const num::Vec crs = a.cross(b);
+		constexpr num::Linear intersectf(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
+			const num::Vecf crs = a.cross(b);
 
 			/* check if the line and the plane are parallel */
 			if (num::Abs(crs.dot(l.d)) <= precision) {
@@ -471,14 +471,14 @@ namespace num {
 		}
 
 		/* compute the intersection point of the plane [this] and the line [l] (invalid if parallel: returns null vector) */
-		constexpr num::Vec intersect(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
-			const num::Vec crs = a.cross(b);
+		constexpr num::Vecf intersect(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
+			const num::Vecf crs = a.cross(b);
 
 			/* check if the line and the plane are parallel */
 			if (num::Abs(crs.dot(l.d)) <= precision) {
 				if (invalid)
 					*invalid = true;
-				return num::Vec{};
+				return num::Vecf{};
 			}
 			else if (invalid)
 				*invalid = false;
@@ -497,22 +497,22 @@ namespace num {
 		}
 
 		/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the Y-Z plane */
-		constexpr num::Linear linearX(const num::Vec& p) const {
+		constexpr num::Linear linearX(const num::Vecf& p) const {
 			return fLinComb(p, num::ComponentX);
 		}
 
 		/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the X-Z plane */
-		constexpr num::Linear linearY(const num::Vec& p) const {
+		constexpr num::Linear linearY(const num::Vecf& p) const {
 			return fLinComb(p, num::ComponentY);
 		}
 
 		/* compute the linear combination to reach the point [p] on plane [this] when projected orthogonally onto the X-Y plane */
-		constexpr num::Linear linearZ(const num::Vec& p) const {
+		constexpr num::Linear linearZ(const num::Vecf& p) const {
 			return fLinComb(p, num::ComponentZ);
 		}
 
 		/* compute the linear combination to reach the point [p] when the point lies on the plane */
-		constexpr num::Linear linear(const num::Vec& p, bool* touching = 0, float precision = num::Precision) const {
+		constexpr num::Linear linear(const num::Vecf& p, bool* touching = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	find the smallest component of the cross product which ensures that
 			*	the other two components are larger, as long as the plane is well defined

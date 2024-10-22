@@ -5,13 +5,13 @@
 
 namespace num {
 	struct Line {
-		num::Vec o;
-		num::Vec d;
+		num::Vecf o;
+		num::Vecf d;
 
 	public:
 		constexpr Line() = default;
-		constexpr Line(const num::Vec& d) : d{ d } {}
-		constexpr Line(const num::Vec& o, const num::Vec& d) : o{ o }, d{ d } {}
+		constexpr Line(const num::Vecf& d) : d{ d } {}
+		constexpr Line(const num::Vecf& o, const num::Vecf& d) : o{ o }, d{ d } {}
 
 	private:
 		/* compute the linear combination of the line [this] and line [l] to intersect based on the two other axes than the index axis */
@@ -44,17 +44,17 @@ namespace num {
 	public:
 		/* create a line along the x axis with the length [l] and its origin the the origin */
 		static constexpr num::Line AxisX(float l = 1.0f) {
-			return num::Line{ num::Vec::AxisX(l) };
+			return num::Line{ num::Vecf::AxisX(l) };
 		}
 
 		/* create a line along the y axis with the length [l] and its origin the the origin */
 		static constexpr num::Line AxisY(float l = 1.0f) {
-			return num::Line{ num::Vec::AxisY(l) };
+			return num::Line{ num::Vecf::AxisY(l) };
 		}
 
 		/* create a line along the z axis with the length [l] and its origin the the origin */
 		static constexpr num::Line AxisZ(float l = 1.0f) {
-			return num::Line{ num::Vec::AxisZ(l) };
+			return num::Line{ num::Vecf::AxisZ(l) };
 		}
 
 	public:
@@ -74,7 +74,7 @@ namespace num {
 		}
 
 		/* compute a point on line [this] */
-		constexpr num::Vec point(float t) const {
+		constexpr num::Vecf point(float t) const {
 			return o + d * t;
 		}
 
@@ -90,7 +90,7 @@ namespace num {
 		}
 
 		/* check if [p] lies on line [this] */
-		constexpr bool touch(const num::Vec& p, float precision = num::Precision) const {
+		constexpr bool touch(const num::Vecf& p, float precision = num::Precision<float>::Def) const {
 			/*
 			*	E: o + s * d
 			*	Set equal to [p] and solve for s and insert
@@ -101,31 +101,31 @@ namespace num {
 			const float s = (p.c[index] - o.c[index]) / d.c[index];
 
 			/* compute the point on the line where the given point is expected to be */
-			const num::Vec t = point(s);
+			const num::Vecf t = point(s);
 
 			/* ensure that the points are equal */
 			return p.equal(t, precision);
 		}
 
 		/* returns a position along the [this] line where the point [p] lies (result only valid if it lies on the line) */
-		constexpr float find(const num::Vec& p) const {
+		constexpr float find(const num::Vecf& p) const {
 			/* extract the largest component of the direction and use it to compute the scaling factor */
 			size_t index = d.comp(true);
 			return (p.c[index] - o.c[index]) / d.c[index];
 		}
 
 		/* check if the line [l] and line [this] describe the same line */
-		constexpr bool equal(const num::Line& l, float precision = num::Precision) const {
+		constexpr bool equal(const num::Line& l, float precision = num::Precision<float>::Def) const {
 			return l.touch(o, precision) && l.d.parallel(d, precision);
 		}
 
 		/* check if the line [l] and line [this] describe the identically same line */
-		constexpr bool identical(const num::Line& l, float precision = num::Precision) const {
+		constexpr bool identical(const num::Line& l, float precision = num::Precision<float>::Def) const {
 			return l.o.equal(o, precision) && l.d.equal(d, precision);
 		}
 
 		/* compute the factor for which line [this] reaches the point closest to p (automatically perpendicular) */
-		constexpr float closestf(const num::Vec& p) const {
+		constexpr float closestf(const num::Vecf& p) const {
 			/*
 			*	o + a * d = p + v
 			*	-> (o + a * d - p) * d = 0 (the line and [p:v] should be perpendicular)
@@ -135,7 +135,7 @@ namespace num {
 		}
 
 		/* compute the shortest vector which connects [p] to a point on the line (automatically perpendicular) */
-		constexpr num::Vec closest(const num::Vec& p) const {
+		constexpr num::Vecf closest(const num::Vecf& p) const {
 			const float a = closestf(p);
 			return point(a) - p;
 		}
@@ -154,7 +154,7 @@ namespace num {
 			*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
 			*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
 			*/
-			const num::Vec v = d.cross(l.d);
+			const num::Vecf v = d.cross(l.d);
 
 			/* check if the lines run in parallel */
 			if (v.zero())
@@ -162,7 +162,7 @@ namespace num {
 
 			/* compute the two scalars */
 			const float tmp = v.dot(v);
-			const num::Vec df = l.o - o;
+			const num::Vecf df = l.o - o;
 			const float s = -df.dot(v.cross(l.d)) / tmp;
 			const float t = -df.dot(v.cross(d)) / tmp;
 
@@ -184,7 +184,7 @@ namespace num {
 			*	Solution: s = ((o - l.o) * (v x l.d)) / v * (d x l.d)
 			*	Solution: t = ((o - l.o) * (v x d)) / v * (d x l.d)
 			*/
-			const num::Vec v = d.cross(l.d);
+			const num::Vecf v = d.cross(l.d);
 
 			/* check if the lines run in parallel */
 			if (v.zero())
@@ -192,7 +192,7 @@ namespace num {
 
 			/* compute the two scalars */
 			const float tmp = v.dot(v);
-			const num::Vec df = l.o - o;
+			const num::Vecf df = l.o - o;
 			const float r = df.dot(v) / tmp;
 			const float s = -df.dot(v.cross(l.d)) / tmp;
 
@@ -201,7 +201,7 @@ namespace num {
 		}
 
 		/* compute the factor to scale line [this] with to reach the intersection point of this line and the Y-Z plane at [xPlane] (invalid if parallel: returns [this] origin) */
-		constexpr float intersectPlaneXf(float xPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr float intersectPlaneXf(float xPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/* check if the line and the plane are parallel */
 			if (num::Abs(d.x) <= precision) {
 				if (invalid)
@@ -220,13 +220,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and the Y-Z plane at [xPlane] (invalid if parallel: returns null vector) */
-		constexpr num::Vec intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectPlaneX(float xPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float a = intersectPlaneXf(xPlane, invalid, precision);
 			return point(a);
 		}
 
 		/* compute the factor to scale line [this] with to reach the intersection point of this line and the X-Z plane at [yPlane] (invalid if parallel: returns [this] origin) */
-		constexpr float intersectPlaneYf(float yPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr float intersectPlaneYf(float yPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/* check if the line and the plane are parallel */
 			if (num::Abs(d.y) <= precision) {
 				if (invalid)
@@ -246,13 +246,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and the X-Z plane at [yPlane] (invalid if parallel: returns null vector) */
-		constexpr num::Vec intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectPlaneY(float yPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float a = intersectPlaneYf(yPlane, invalid, precision);
 			return point(a);
 		}
 
 		/* compute the factor to scale line [this] with to reach the intersection point of this line and the X-Y plane at [zPlane] (invalid if parallel: returns [this] origin) */
-		constexpr float intersectPlaneZf(float zPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr float intersectPlaneZf(float zPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/* check if the line and the plane are parallel */
 			if (num::Abs(d.z) <= precision) {
 				if (invalid)
@@ -272,13 +272,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and the X-Y plane at [zPlane] (invalid if parallel: returns null vector) */
-		constexpr num::Vec intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectPlaneZ(float zPlane, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float a = intersectPlaneZf(zPlane, invalid, precision);
 			return point(a);
 		}
 
 		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Y plane (invalid if no intersection point: returns 0, 0) */
-		constexpr num::Linear intersectXf(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Linear intersectXf(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			bool parallel = false;
 
 			/* compute the linear combination */
@@ -291,13 +291,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and line [l] when viewed in the X-Y plane (invalid if no intersection point: returns [this] origin) */
-		constexpr num::Vec intersectX(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectX(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float s = intersectXf(l, invalid, precision).s;
 			return point(s);
 		}
 
 		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Z plane (invalid if no intersection point: returns 0, 0) */
-		constexpr num::Linear intersectYf(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Linear intersectYf(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			bool parallel = false;
 
 			/* compute the linear combination */
@@ -310,13 +310,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and line [l] when viewed in the X-Z plane (invalid if no intersection point: returns [this] origin) */
-		constexpr num::Vec intersectY(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectY(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float s = intersectYf(l, invalid, precision).s;
 			return point(s);
 		}
 
 		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the Y-Z plane (invalid if no intersection point: returns 0, 0) */
-		constexpr num::Linear intersectZf(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Linear intersectZf(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			bool parallel = false;
 
 			/* compute the linear combination */
@@ -329,13 +329,13 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and line [l] when viewed in the Y-Z plane (invalid if no intersection point: returns [this] origin) */
-		constexpr num::Vec intersectZ(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersectZ(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float s = intersectZf(l, invalid, precision).s;
 			return point(s);
 		}
 
 		/* compute the factor to scale line [this] and line [l] with to intersect the lines (invalid if no intersection point: returns 0, 0) */
-		constexpr num::Linear intersectf(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Linear intersectf(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			/*
 			*	Select the axis to compute the combination for by computing the cross product between
 			*	the two and then selecting the smallest component which ensures that the other two components
@@ -359,7 +359,7 @@ namespace num {
 		}
 
 		/* compute the intersection point of line [this] and the line [l] (invalid if no intersection point: returns [this] origin) */
-		constexpr num::Vec intersect(const num::Line& l, bool* invalid = 0, float precision = num::Precision) const {
+		constexpr num::Vecf intersect(const num::Line& l, bool* invalid = 0, float precision = num::Precision<float>::Def) const {
 			const float f = intersectf(l, invalid, precision).s;
 			return point(f);
 		}

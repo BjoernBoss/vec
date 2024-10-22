@@ -1,32 +1,41 @@
 #pragma once
 
+#include <istream>
+#include <ostream>
+
 #include "num-common.h"
 #include "num-vec.h"
 #include "num-line.h"
 #include "num-plane.h"
 
-constexpr num::Line num::Vec::line(const num::Vec& p) const {
+template <class Type>
+constexpr num::Line num::Vec<Type>::line(const num::Vec<Type>& p) const {
 	return num::Line{ *this, p - *this };
 }
 
-constexpr num::Plane num::Vec::plane(const num::Vec& p0, const num::Vec& p1) const {
+template <class Type>
+constexpr num::Plane num::Vec<Type>::plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const {
 	return num::Plane{ *this, p0 - *this, p1 - *this };
 }
 
-std::ostream& operator<<(std::ostream& out, const num::Vec& v) {
+template <class Type>
+std::ostream& operator<<(std::ostream& out, const num::Vec<Type>& v) {
 	return (out << v.x << ", " << v.y << ", " << v.z);
 }
-std::wostream& operator<<(std::wostream& out, const num::Vec& v) {
+template <class Type>
+std::wostream& operator<<(std::wostream& out, const num::Vec<Type>& v) {
 	return (out << v.x << L", " << v.y << L", " << v.z);
 }
-std::istream& operator>>(std::istream& in, num::Vec& v) {
+template <class Type>
+std::istream& operator>>(std::istream& in, num::Vec<Type>& v) {
 	char pad0 = 0, pad1 = 0;
 	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
 	if (pad0 != ',' || pad1 != ',')
 		in.setstate(std::ios::failbit);
 	return in;
 }
-std::wistream& operator>>(std::wistream& in, num::Vec& v) {
+template <class Type>
+std::wistream& operator>>(std::wistream& in, num::Vec<Type>& v) {
 	wchar_t pad0 = 0, pad1 = 0;
 	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
 	if (pad0 != L',' || pad1 != L',')
