@@ -4,7 +4,7 @@
 
 namespace num {
 	template <class> struct Line;
-	struct Plane;
+	template <class> struct Plane;
 
 	/* defines the component layout in memory */
 	enum Component : uint8_t {
@@ -250,7 +250,7 @@ namespace num {
 		constexpr num::Line<Type> line(const num::Vec<Type>& p) const;
 
 		/* construct the plane [this:(p0-this):(p1-this)] */
-		constexpr num::Plane plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const;
+		constexpr num::Plane<Type> plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const;
 
 		/* construct a vector interpolated between [this] and the vector [v] at [t] */
 		constexpr num::Vec<Type> interpolate(const num::Vec<Type>& p, Type t) const {

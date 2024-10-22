@@ -9,9 +9,20 @@
 #include "num-plane.h"
 
 namespace num {
-
 	using Constf = num::Const<float>;
 	using Constd = num::Const<double>;
+
+	using Vecf = num::Vec<float>;
+	using Vecd = num::Vec<double>;
+
+	using Linearf = num::Linear<float>;
+	using Lineard = num::Linear<double>;
+
+	using Linef = num::Line<float>;
+	using Lined = num::Line<double>;
+
+	using Planef = num::Plane<float>;
+	using Planed = num::Plane<double>;
 }
 
 template <class Type>
@@ -20,8 +31,8 @@ constexpr num::Line<Type> num::Vec<Type>::line(const num::Vec<Type>& p) const {
 }
 
 template <class Type>
-constexpr num::Plane num::Vec<Type>::plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const {
-	return num::Plane{ *this, p0 - *this, p1 - *this };
+constexpr num::Plane<Type> num::Vec<Type>::plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const {
+	return num::Plane<Type>{ *this, p0 - *this, p1 - *this };
 }
 
 template <class Type>
@@ -74,21 +85,24 @@ std::wistream& operator>>(std::wistream& in, num::Line<Type>& l) {
 	return in;
 }
 
-
-std::ostream& operator<<(std::ostream& out, const num::Plane& p) {
+template <class Type>
+std::ostream& operator<<(std::ostream& out, const num::Plane<Type>& p) {
 	return (out << p.o << " -> " << p.a << " | " << p.b);
 }
-std::wostream& operator<<(std::wostream& out, const num::Plane& p) {
+template <class Type>
+std::wostream& operator<<(std::wostream& out, const num::Plane<Type>& p) {
 	return (out << p.o << L" -> " << p.a << L" | " << p.b);
 }
-std::istream& operator>>(std::istream& in, num::Plane& p) {
+template <class Type>
+std::istream& operator>>(std::istream& in, num::Plane<Type>& p) {
 	char pad0 = 0, pad1 = 0, pad2 = 0;
 	in >> p.o >> pad0 >> pad1 >> p.a >> pad2 >> p.b;
 	if (pad0 != '-' || pad1 != '>' || pad2 != '|')
 		in.setstate(std::ios::failbit);
 	return in;
 }
-std::wistream& operator>>(std::wistream& in, num::Plane& p) {
+template <class Type>
+std::wistream& operator>>(std::wistream& in, num::Plane<Type>& p) {
 	wchar_t pad0 = 0, pad1 = 0, pad2 = 0;
 	in >> p.o >> pad0 >> pad1 >> p.a >> pad2 >> p.b;
 	if (pad0 != L'-' || pad1 != L'>' || pad2 != L'|')
