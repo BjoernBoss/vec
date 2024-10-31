@@ -4,7 +4,7 @@
 #include "num-vec.h"
 
 namespace num {
-	template <class Type>
+	template <std::floating_point Type>
 	struct Plane {
 		num::Vec<Type> o;
 		num::Vec<Type> a;
@@ -247,17 +247,17 @@ namespace num {
 			const num::Vec<Type> t = point(r);
 
 			/* compare the point on the plane with the given point */
-			return p.equal(t, precision);
+			return p.match(t, precision);
 		}
 
 		/* check if the plane [p] and plane [this] describe the same plane */
-		constexpr bool equal(const num::Plane<Type>& p, Type precision = num::Const<Type>::Precision) const {
+		constexpr bool match(const num::Plane<Type>& p, Type precision = num::Const<Type>::Precision) const {
 			return p.touch(o, precision) && a.cross(b).parallel(p.normal(), precision);
 		}
 
 		/* check if the plane [p] and plane [this] describe the identically same plane */
 		constexpr bool identical(const num::Plane<Type>& p, Type precision = num::Const<Type>::Precision) const {
-			return p.o.equal(o, precision) && p.a.equal(a, precision) && p.b.equal(b, precision);
+			return p.o.identical(o, precision) && p.a.identical(a, precision) && p.b.identical(b, precision);
 		}
 
 		/* compute the shortest vector which connects [p] to a point on the plane (automatically perpendicular) */

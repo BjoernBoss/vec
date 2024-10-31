@@ -25,37 +25,37 @@ namespace num {
 	using Planed = num::Plane<double>;
 }
 
-template <class Type>
+template <std::floating_point Type>
 constexpr num::Line<Type> num::Vec<Type>::line(const num::Vec<Type>& p) const {
 	return num::Line<Type>{ *this, p - *this };
 }
 
-template <class Type>
+template <std::floating_point Type>
 constexpr num::Plane<Type> num::Vec<Type>::plane(const num::Vec<Type>& p0, const num::Vec<Type>& p1) const {
 	return num::Plane<Type>{ *this, p0 - *this, p1 - *this };
 }
 
 template <class Type>
 std::ostream& operator<<(std::ostream& out, const num::Vec<Type>& v) {
-	return (out << v.x << ", " << v.y << ", " << v.z);
+	return (out << '(' << v.x << ", " << v.y << ", " << v.z << ')');
 }
 template <class Type>
 std::wostream& operator<<(std::wostream& out, const num::Vec<Type>& v) {
-	return (out << v.x << L", " << v.y << L", " << v.z);
+	return (out << L'(' << v.x << L", " << v.y << L", " << v.z << L')');
 }
 template <class Type>
 std::istream& operator>>(std::istream& in, num::Vec<Type>& v) {
-	char pad0 = 0, pad1 = 0;
-	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
-	if (pad0 != ',' || pad1 != ',')
+	char pad0 = 0, pad1 = 0, pad2 = 0, pad3 = 0;
+	in >> pad0 >> v.x >> pad1 >> v.y >> pad2 >> v.z >> pad3;
+	if (pad0 != '(' || pad1 != ',' || pad2 != ',' || pad3 != ')')
 		in.setstate(std::ios::failbit);
 	return in;
 }
 template <class Type>
 std::wistream& operator>>(std::wistream& in, num::Vec<Type>& v) {
-	wchar_t pad0 = 0, pad1 = 0;
-	in >> v.x >> pad0 >> v.y >> pad1 >> v.z;
-	if (pad0 != L',' || pad1 != L',')
+	wchar_t pad0 = 0, pad1 = 0, pad2 = 0, pad3 = 0;
+	in >> pad0 >> v.x >> pad1 >> v.y >> pad2 >> v.z >> pad3;
+	if (pad0 != L'(' || pad1 != L',' || pad2 != L',' || pad3 != L')')
 		in.setstate(std::ios::failbit);
 	return in;
 }

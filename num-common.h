@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <concepts>
 
 namespace num {
 	/*
@@ -12,7 +13,7 @@ namespace num {
 	*	- angles are calculated in degrees
 	*/
 
-	template <class Type> struct Const;
+	template <std::floating_point Type> struct Const;
 	template <> struct Const<float> {
 		static constexpr float Precision = 0.00001f;
 		static constexpr float Pi = 3.14159265f;
@@ -25,21 +26,21 @@ namespace num {
 	};
 
 	/* float abs-function (not using std implementation to allow for constexpr) */
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type Abs(Type v) {
 		return (v < 0 ? -v : v);
 	}
 
 	/* check if number can be considered zero */
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr bool Zero(Type a, Type p = num::Const<Type>::Precision) {
 		/* dont check for nan as nan will fail this check and thereby return false by default */
 		return num::Abs(a) <= (num::Const<Type>::ZeroPrecisionFactor * p);
 	}
 
 	/* compare the values for equality, given the corresponding precision */
-	template <class Type>
-	constexpr bool Cmp(Type a, Type b, Type p = num::Const<Type>::Precision) {
+	template <std::floating_point Type>
+	bool Cmp(Type a, Type b, Type p = num::Const<Type>::Precision) {
 		if (std::isnan(a) || std::isnan(b))
 			return false;
 		if (a == 0)
@@ -51,17 +52,17 @@ namespace num {
 		return num::Abs(a - b) <= std::min(_a, _b) * p;
 	}
 
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type ToRadian(Type deg) {
 		return deg * (num::Const<Type>::Pi / 180);
 	}
 
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type ToDegree(Type deg) {
 		return deg * (180 / num::Const<Type>::Pi);
 	}
 
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type ToAngle(Type x, Type y) {
 		Type deg = num::ToDegree(std::atan2(x, y));
 		if (deg < 0)
@@ -70,7 +71,7 @@ namespace num {
 	}
 
 	/* compute the angle to add to [base] to reach [test] in degrees */
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type AngleDiff(Type base, Type test) {
 		Type diff = test - base;
 		if (diff <= -180)
@@ -81,7 +82,7 @@ namespace num {
 	}
 
 	/* compute the absolute difference between [base] and [test] in degrees */
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr Type AngleAbs(Type base, Type test) {
 		Type diff = num::Abs(test - base);
 		if (diff > 180)
@@ -89,7 +90,7 @@ namespace num {
 		return diff;
 	}
 
-	template <class Type>
+	template <std::floating_point Type>
 	struct Linear {
 	public:
 		Type s;

@@ -3,8 +3,8 @@
 #include "num-common.h"
 
 namespace num {
-	template <class> struct Line;
-	template <class> struct Plane;
+	template <std::floating_point> struct Line;
+	template <std::floating_point> struct Plane;
 
 	/* defines the component layout in memory */
 	enum Component : uint8_t {
@@ -13,7 +13,7 @@ namespace num {
 		ComponentZ = 2,
 	};
 
-	template <class Type>
+	template <std::floating_point Type>
 	struct Vec {
 	public:
 		union {
@@ -71,7 +71,7 @@ namespace num {
 			return *this;
 		}
 		constexpr bool operator==(const num::Vec<Type>& v) const {
-			return equal(v);
+			return identical(v);
 		}
 		constexpr bool operator!=(const num::Vec<Type>& v) const {
 			return !(*this == v);
@@ -296,7 +296,7 @@ namespace num {
 			const Type f = c[largest[0]] / v.c[largest[1]];
 
 			/* check if the vectors are equal when scaled */
-			return equal(v * f, precision);
+			return match(v * f, precision);
 		}
 
 		/* check if [this] and [v] describe the same vector but scaled by a positive factor */
@@ -314,11 +314,11 @@ namespace num {
 				return false;
 
 			/* check if the vectors are equal when scaled */
-			return equal(v * f, precision);
+			return match(v * f, precision);
 		}
 
 		/* check if [this] and [v] are identical (all components are weighted the same) */
-		constexpr bool equal(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
+		constexpr bool identical(const num::Vec<Type>& v, Type precision = num::Const<Type>::Precision) const {
 			/* dont subtract and then compare with zero as small errors will have a much larger effect on
 			*	the result due to the canceling effects of subtraction on the information */
 			return num::Cmp(x, v.x, precision) && num::Cmp(y, v.y, precision) && num::Cmp(z, v.z, precision);
@@ -425,7 +425,7 @@ namespace num {
 		}
 	};
 
-	template <class Type>
+	template <std::floating_point Type>
 	constexpr num::Vec<Type> operator*(Type s, const num::Vec<Type>& v) {
 		return v * s;
 	}

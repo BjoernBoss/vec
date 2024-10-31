@@ -4,7 +4,7 @@
 #include "num-vec.h"
 
 namespace num {
-	template <class Type>
+	template <std::floating_point Type>
 	struct Line {
 		num::Vec<Type> o;
 		num::Vec<Type> d;
@@ -105,7 +105,7 @@ namespace num {
 			const num::Vec<Type> t = point(s);
 
 			/* ensure that the points are equal */
-			return p.equal(t, precision);
+			return p.match(t, precision);
 		}
 
 		/* returns a position along the [this] line where the point [p] lies (result only valid if it lies on the line) */
@@ -116,13 +116,13 @@ namespace num {
 		}
 
 		/* check if the line [l] and line [this] describe the same line */
-		constexpr bool equal(const num::Line<Type>& l, Type precision = num::Const<Type>::Precision) const {
+		constexpr bool match(const num::Line<Type>& l, Type precision = num::Const<Type>::Precision) const {
 			return l.touch(o, precision) && l.d.parallel(d, precision);
 		}
 
 		/* check if the line [l] and line [this] describe the identically same line */
 		constexpr bool identical(const num::Line<Type>& l, Type precision = num::Const<Type>::Precision) const {
-			return l.o.equal(o, precision) && l.d.equal(d, precision);
+			return l.o.identical(o, precision) && l.d.identical(d, precision);
 		}
 
 		/* compute the factor for which line [this] reaches the point closest to p (automatically perpendicular) */
@@ -278,7 +278,7 @@ namespace num {
 			return point(a);
 		}
 
-		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Y plane (invalid if no intersection point: returns 0, 0) */
+		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the Y-Z plane (invalid if no intersection point: returns 0, 0) */
 		constexpr num::Linear<Type> intersectXf(const num::Line<Type>& l, bool* invalid = 0, Type precision = num::Const<Type>::Precision) const {
 			bool parallel = false;
 
@@ -291,7 +291,7 @@ namespace num {
 			return lin;
 		}
 
-		/* compute the intersection point of line [this] and line [l] when viewed in the X-Y plane (invalid if no intersection point: returns [this] origin) */
+		/* compute the intersection point of line [this] and line [l] when viewed in the Y-Z plane (invalid if no intersection point: returns [this] origin) */
 		constexpr num::Vec<Type> intersectX(const num::Line<Type>& l, bool* invalid = 0, Type precision = num::Const<Type>::Precision) const {
 			const Type s = intersectXf(l, invalid, precision).s;
 			return point(s);
@@ -316,7 +316,7 @@ namespace num {
 			return point(s);
 		}
 
-		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the Y-Z plane (invalid if no intersection point: returns 0, 0) */
+		/* compute the factor to scale line [this] and line [l] with to intersect the lines when viewed in the X-Y plane (invalid if no intersection point: returns 0, 0) */
 		constexpr num::Linear<Type> intersectZf(const num::Line<Type>& l, bool* invalid = 0, Type precision = num::Const<Type>::Precision) const {
 			bool parallel = false;
 
@@ -329,7 +329,7 @@ namespace num {
 			return lin;
 		}
 
-		/* compute the intersection point of line [this] and line [l] when viewed in the Y-Z plane (invalid if no intersection point: returns [this] origin) */
+		/* compute the intersection point of line [this] and line [l] when viewed in the X-Y plane (invalid if no intersection point: returns [this] origin) */
 		constexpr num::Vec<Type> intersectZ(const num::Line<Type>& l, bool* invalid = 0, Type precision = num::Const<Type>::Precision) const {
 			const Type s = intersectZf(l, invalid, precision).s;
 			return point(s);
